@@ -824,6 +824,31 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const uploadImageToSupabase = async (file) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `questions/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('exam-images')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+      if (uploadError) {
+        console.error('Upload Error:', uploadError);
+        toast.error('Gagal mengunggah gambar ke server.');
+        return null;
+      }
+
+      const { data } = supabase.storage.from('exam-images').getPublicUrl(filePath);
+      return data.publicUrl;
+    } catch (error) {
+       console.error("Upload exception", error);
+       toast.error('Terjadi pengecualian saat unggah.');
+       return null;
+    }
+  };
+
   return (
     <AppContext.Provider value={{ 
       exams, setExams, addExam, deleteExam, updateExam,
@@ -833,6 +858,7 @@ export const AppProvider = ({ children }) => {
       staffList, addStaff, deleteStaff, updateStaff,
       questions, addQuestion, deleteQuestion, importQuestions, updateQuestion,
       user, login, logout, handleCloudLogin, handleGoogleLogin, updateProfile,
+      uploadImageToSupabase,
       fetchLeaderboard,
       showConfirm,
       schools, addSchool, updateSchool, deleteSchool,
