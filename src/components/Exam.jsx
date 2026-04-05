@@ -10,7 +10,7 @@ const Exam = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { exams, saveResult, isFetching, showConfirm, fetchExamSession, upsertExamSession, deleteExamSession } = useContext(AppContext);
-  
+
   const examData = exams.find(e => e.id === id);
 
   // States
@@ -89,11 +89,11 @@ const Exam = () => {
   }, [isSessionLoaded, isFinished, shuffledQuestions, examData, upsertExamSession]);
 
   // === ALL HOOKS MUST PRECEED EARLY RETURNS ===
-  
+
   // Timer Countdown Effect
   useEffect(() => {
     if (timeLeft <= 0 || isFinished) return;
-    
+
     const timerId = setInterval(() => {
       setTimeLeft(prev => prev - 1);
     }, 1000);
@@ -130,7 +130,7 @@ const Exam = () => {
   const forceSubmitResult = async () => {
     if (!shuffledQuestions) return;
     setIsFinished(true);
-    
+
     let correctAnswers = 0;
     const details = [];
     const totalQs = shuffledQuestions.length;
@@ -138,7 +138,7 @@ const Exam = () => {
     shuffledQuestions.forEach(q => {
       const isCorrect = answers[q.id] === q.correctOption || answers[q.id] === q.correctAnswer;
       if (isCorrect) correctAnswers++;
-      
+
       details.push({
         questionText: q.text,
         studentAnswer: answers[q.id] !== undefined ? q.options[answers[q.id]] : 'Tidak Dijawab',
@@ -146,9 +146,9 @@ const Exam = () => {
         isCorrect: isCorrect
       });
     });
-    
+
     const score = Math.round((correctAnswers / totalQs) * 100) || 0;
-    
+
     await saveResult({
       examId: examData.id,
       examTitle: examData.title,
@@ -159,7 +159,7 @@ const Exam = () => {
       status: score >= 70 ? 'Lulus' : 'Gagal',
       details: details
     });
-    
+
     await deleteExamSession(examData.id);
     navigate('/history');
   };
@@ -253,11 +253,11 @@ const Exam = () => {
 
   const currentQuestion = shuffledQuestions[currentIdx];
   const totalQuestions = shuffledQuestions.length;
-  
+
   if (!currentQuestion) return null;
 
   return (
-    <motion.div 
+    <motion.div
       className="exam-container"
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -284,7 +284,7 @@ const Exam = () => {
         <main className="exam-main-panel glass-panel">
           <div className="question-header">
             <h3>Soal No. {currentIdx + 1}</h3>
-            <button 
+            <button
               className={`flag-button ${flagged[currentQuestion.id] ? 'active' : ''}`}
               onClick={() => handleToggleFlag(currentQuestion.id)}
             >
@@ -294,16 +294,21 @@ const Exam = () => {
           </div>
 
           <div className="question-content">
+            {currentQuestion.imageUrl && (
+              <div style={{ marginBottom: '24px', textAlign: 'left' }}>
+                <img src={currentQuestion.imageUrl} alt="Lampiran Soal" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }} />
+              </div>
+            )}
             <p className="question-text">{currentQuestion.text}</p>
-            
+
             <div className="options-list">
               {currentQuestion.options.map((opt, idx) => {
                 const isSelected = answers[currentQuestion.id] === idx;
                 const optionLabel = String.fromCharCode(65 + idx); // A, B, C...
-                
+
                 return (
-                  <div 
-                    key={idx} 
+                  <div
+                    key={idx}
                     className={`option-item ${isSelected ? 'selected' : ''}`}
                     onClick={() => handleSelectOption(currentQuestion.id, idx)}
                   >
@@ -317,15 +322,15 @@ const Exam = () => {
           </div>
 
           <div className="exam-navigation">
-            <button 
-              className="nav-btn btn-secondary" 
-              onClick={handlePrev} 
+            <button
+              className="nav-btn btn-secondary"
+              onClick={handlePrev}
               disabled={currentIdx === 0}
             >
               <ChevronLeft size={20} />
               <span>Kembali</span>
             </button>
-            
+
             {currentIdx < totalQuestions - 1 ? (
               <button className="nav-btn btn-primary" onClick={handleNext}>
                 <span>Selanjutnya</span>
@@ -342,9 +347,9 @@ const Exam = () => {
 
         {/* Right Sidebar - Number Grid */}
         <div className="mobile-nav-toggle-wrapper">
-           <button className="mobile-nav-toggle btn-secondary" onClick={() => setIsNavOpen(!isNavOpen)}>
-              <span>{isNavOpen ? 'Tutup Peta Navigasi Soal' : 'Lihat Peta Navigasi Soal'}</span>
-           </button>
+          <button className="mobile-nav-toggle btn-secondary" onClick={() => setIsNavOpen(!isNavOpen)}>
+            <span>{isNavOpen ? 'Tutup Peta Navigasi Soal' : 'Lihat Peta Navigasi Soal'}</span>
+          </button>
         </div>
         <aside className={`exam-sidebar glass-panel ${isNavOpen ? 'nav-open' : 'nav-closed'}`}>
           <div className="sidebar-header">
@@ -353,13 +358,13 @@ const Exam = () => {
               {Object.keys(answers).length} / {totalQuestions} Dijawab
             </div>
           </div>
-          
+
           <div className="question-grid">
             {shuffledQuestions.map((q, idx) => {
               const isAnswered = answers[q.id] !== undefined;
               const isFlagged = flagged[q.id];
               const isActive = currentIdx === idx;
-              
+
               let btnClass = "grid-btn";
               if (isActive) btnClass += " active";
               else if (isFlagged) btnClass += " flagged";
@@ -367,8 +372,8 @@ const Exam = () => {
               else btnClass += " default";
 
               return (
-                <button 
-                  key={q.id} 
+                <button
+                  key={q.id}
                   className={btnClass}
                   onClick={() => setCurrentIdx(idx)}
                 >
