@@ -60,6 +60,63 @@ export const AppProvider = ({ children }) => {
     setHistory([]);
   };
 
+  // Exam Auto-Save Methods
+  const fetchExamSession = async (examId) => {
+    if (!user || user.role !== 'student') return null;
+    
+    const { data, error } = await supabase
+      .from('exam_sessions')
+      .select('*')
+      .eq('student_nis', user.username)
+      .eq('exam_id', examId)
+      .single();
+      
+    if (error) {
+      if (error.code !== 'PGRST116') { // not found error
+        console.error('Error fetching exam session:', error);
+      }
+      return null;
+    }
+    return data;
+  };
+
+  const upsertExamSession = async (sessionData) => {
+    if (!user || user.role !== 'student') return;
+
+    const payload = {
+      student_nis: user.username,
+      exam_id: sessionData.examId,
+      answers: sessionData.answers,
+      flagged: sessionData.flagged,
+      time_left: sessionData.timeLeft,
+      current_idx: sessionData.currentIdx,
+      shuffled_questions: sessionData.shuffledQuestions,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from('exam_sessions')
+      .upsert(payload, { onConflict: 'student_nis, exam_id' });
+
+    if (error) {
+      console.error('Error auto-saving session:', error);
+    }
+  };
+
+  const deleteExamSession = async (examId) => {
+    if (!user || user.role !== 'student') return;
+
+    const { error } = await supabase
+      .from('exam_sessions')
+      .delete()
+      .eq('student_nis', user.username)
+      .eq('exam_id', examId);
+      
+    if (error) {
+      console.error('Error deleting exam session:', error);
+    }
+  };
+
   // Fetch Data from Supabase
   useEffect(() => {
     let isMounted = true;
@@ -771,6 +828,7 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider value={{ 
       exams, setExams, addExam, deleteExam, updateExam,
       history, saveResult,
+      fetchExamSession, upsertExamSession, deleteExamSession,
       students, addStudent, deleteStudent, importStudents, updateStudent,
       staffList, addStaff, deleteStaff, updateStaff,
       questions, addQuestion, deleteQuestion, importQuestions, updateQuestion,

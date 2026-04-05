@@ -9,7 +9,7 @@ import './Exam.css';
 const Exam = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { exams, saveResult, isFetching, showConfirm } = useContext(AppContext);
+  const { exams, saveResult, isFetching, showConfirm, fetchExamSession, upsertExamSession, deleteExamSession } = useContext(AppContext);
   
   const examData = exams.find(e => e.id === id);
 
@@ -23,26 +23,70 @@ const Exam = () => {
   const [violations, setViolations] = useState(0);
   const VIOLATION_LIMIT = 3;
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [isSessionLoaded, setIsSessionLoaded] = useState(false);
 
   useEffect(() => {
-    if (examData && !shuffledQuestions) {
-      let questionsCopy = Array.isArray(examData.questions) ? [...examData.questions] : [];
-      if (questionsCopy.length > 0 && examData.shuffle_questions) {
-        questionsCopy = questionsCopy.sort(() => Math.random() - 0.5);
-      }
-      const processedQuestions = questionsCopy.map(q => {
-        let processedQ = { ...q, originalCorrectOption: q.correctOption };
-        if (examData.shuffle_options && Array.isArray(q.options)) {
-          let optMap = q.options.map((text, idx) => ({ text, isCorrect: idx === q.correctOption }));
-          optMap = optMap.sort(() => Math.random() - 0.5);
-          processedQ.options = optMap.map(o => o.text);
-          processedQ.correctOption = optMap.findIndex(o => o.isCorrect);
+    let isMounted = true;
+    const initSession = async () => {
+      if (examData && !isSessionLoaded) {
+        const session = await fetchExamSession(examData.id);
+        if (!isMounted) return;
+
+        if (session) {
+          // Restore from DB session
+          setShuffledQuestions(session.shuffled_questions);
+          setAnswers(session.answers || {});
+          setFlagged(session.flagged || {});
+          setTimeLeft(session.time_left);
+          setCurrentIdx(session.current_idx || 0);
+          toast.success('Melanjutkan sesi ujian sebelumnya...', { icon: '🔄', duration: 4000 });
+        } else {
+          // Initialize fresh
+          let questionsCopy = Array.isArray(examData.questions) ? [...examData.questions] : [];
+          if (questionsCopy.length > 0 && examData.shuffle_questions) {
+            questionsCopy = questionsCopy.sort(() => Math.random() - 0.5);
+          }
+          const processedQuestions = questionsCopy.map(q => {
+            let processedQ = { ...q, originalCorrectOption: q.correctOption };
+            if (examData.shuffle_options && Array.isArray(q.options)) {
+              let optMap = q.options.map((text, idx) => ({ text, isCorrect: idx === q.correctOption }));
+              optMap = optMap.sort(() => Math.random() - 0.5);
+              processedQ.options = optMap.map(o => o.text);
+              processedQ.correctOption = optMap.findIndex(o => o.isCorrect);
+            }
+            return processedQ;
+          });
+          setShuffledQuestions(processedQuestions);
         }
-        return processedQ;
-      });
-      setShuffledQuestions(processedQuestions);
-    }
-  }, [examData, shuffledQuestions]);
+        setIsSessionLoaded(true);
+      }
+    };
+    initSession();
+    return () => { isMounted = false; };
+  }, [examData, isSessionLoaded, fetchExamSession]);
+
+  const stateRef = React.useRef({ answers, flagged, timeLeft, currentIdx, shuffledQuestions });
+  useEffect(() => {
+    stateRef.current = { answers, flagged, timeLeft, currentIdx, shuffledQuestions };
+  }, [answers, flagged, timeLeft, currentIdx, shuffledQuestions]);
+
+  // Debounced explicit sync on user action
+  useEffect(() => {
+    if (!isSessionLoaded || isFinished || !shuffledQuestions) return;
+    const timerId = setTimeout(() => {
+      upsertExamSession({ examId: examData.id, ...stateRef.current });
+    }, 1500); // 1.5s debounce
+    return () => clearTimeout(timerId);
+  }, [answers, flagged, currentIdx, isSessionLoaded, isFinished, shuffledQuestions, examData, upsertExamSession]);
+
+  // Periodic strict backup (every 10s for timer and states)
+  useEffect(() => {
+    if (!isSessionLoaded || isFinished || !shuffledQuestions) return;
+    const intervalId = setInterval(() => {
+      upsertExamSession({ examId: examData.id, ...stateRef.current });
+    }, 10000);
+    return () => clearInterval(intervalId);
+  }, [isSessionLoaded, isFinished, shuffledQuestions, examData, upsertExamSession]);
 
   // === ALL HOOKS MUST PRECEED EARLY RETURNS ===
   
@@ -116,6 +160,7 @@ const Exam = () => {
       details: details
     });
     
+    await deleteExamSession(examData.id);
     navigate('/history');
   };
 
