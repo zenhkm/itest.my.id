@@ -9,3 +9,20 @@ PassengerStartupFile app.js
 <IfModule Litespeed>
 </IfModule>
 # DO NOT REMOVE OR MODIFY. CLOUDLINUX ENV VARS CONFIGURATION END
+
+# Serve the static output of the React build and fallback for SPA routing
+<IfModule mod_rewrite.c>
+  RewriteEngine on
+  
+  # Ensure JS modules have the right MIME type to prevent 'application/octet-stream' errors
+  AddType application/javascript .js .mjs
+
+  # Route all requests to the dist/ folder (where Vite outputs files)
+  RewriteCond %{REQUEST_URI} !^/dist/
+  RewriteRule ^(.*)$ /dist/$1 [L]
+
+  # If the file doesn't exist within dist/, fallback to index.html (React Router)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^dist/(.*)$ /dist/index.html [L]
+</IfModule>
