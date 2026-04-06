@@ -123,7 +123,7 @@ const Register = () => {
               <Lock size={20} className="input-icon" />
               <input 
                 type="password" 
-                placeholder="Minimal 5 karakter"
+                placeholder="Minimal 6 karakter"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                 required
