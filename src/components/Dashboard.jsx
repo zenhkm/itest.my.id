@@ -55,7 +55,7 @@ const Dashboard = () => {
             <div className="logo-container sm">
               <BookOpen size={20} className="logo-icon" />
             </div>
-            <h2>Ujian Online</h2>
+            <h2>iTest</h2>
           </div>
           
           <button className="mobile-menu-toggle hide-on-desktop" style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex' }} onClick={() => setIsMobileMenuOpen(true)}>

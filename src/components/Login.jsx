@@ -68,7 +68,7 @@ const Login = () => {
           <div className="logo-container">
             <BookOpen className="logo-icon" size={32} />
           </div>
-          <h1>Ujian Online</h1>
+          <h1>iTest</h1>
           <p>Silakan masuk untuk memulai sesi Anda</p>
         </div>
 
