@@ -221,6 +221,8 @@ export const AppProvider = ({ children }) => {
     } else {
       const mapped = (data || []).map(q => ({
         ...q,
+        imageUrl: q.imageurl || q.imageUrl,
+        optionImages: q.optionimages || q.optionImages || [],
         correctOption: q.correctoption !== undefined ? q.correctoption : q.correctOption
       }));
       setQuestions(mapped);
@@ -655,10 +657,12 @@ export const AppProvider = ({ children }) => {
       id: `q_${Date.now()}_${Math.floor(Math.random()*1000)}`,
       subject: newQuestion.subject,
       text: newQuestion.text,
+      imageurl: newQuestion.imageUrl || null,
+      optionimages: newQuestion.optionImages || [],
       options: newQuestion.options,
       correctoption: newQuestion.correctOption
     };
-    const qToInsertLocal = { ...qToInsertDB, correctOption: newQuestion.correctOption };
+    const qToInsertLocal = { ...qToInsertDB, imageUrl: newQuestion.imageUrl || null, optionImages: newQuestion.optionImages || [], correctOption: newQuestion.correctOption };
 
     const loadingToast = toast.loading('Menyimpan ke Bank Soal...');
     const { error } = await supabase.from('questions').insert([qToInsertDB]);
@@ -679,6 +683,8 @@ export const AppProvider = ({ children }) => {
       id: `q_${Date.now()}_${Math.floor(Math.random()*100000)}`,
       subject: q.subject,
       text: q.text,
+      imageurl: q.imageUrl || null,
+      optionimages: q.optionImages || [],
       options: q.options,
       correctoption: q.correctOption
     }));
@@ -722,6 +728,14 @@ export const AppProvider = ({ children }) => {
     if (updates.correctOption !== undefined) {
       dbUpdates.correctoption = updates.correctOption;
       delete dbUpdates.correctOption;
+    }
+    if (updates.imageUrl !== undefined) {
+      dbUpdates.imageurl = updates.imageUrl;
+      delete dbUpdates.imageUrl;
+    }
+    if (updates.optionImages !== undefined) {
+      dbUpdates.optionimages = updates.optionImages;
+      delete dbUpdates.optionImages;
     }
 
     const { error } = await supabase

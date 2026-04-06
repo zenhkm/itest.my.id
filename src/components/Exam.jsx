@@ -305,16 +305,25 @@ const Exam = () => {
               {currentQuestion.options.map((opt, idx) => {
                 const isSelected = answers[currentQuestion.id] === idx;
                 const optionLabel = String.fromCharCode(65 + idx); // A, B, C...
+                const optImage = currentQuestion.optionImages ? currentQuestion.optionImages[idx] : null;
 
                 return (
                   <div
                     key={idx}
                     className={`option-item ${isSelected ? 'selected' : ''}`}
                     onClick={() => handleSelectOption(currentQuestion.id, idx)}
+                    style={{ alignItems: 'flex-start' }}
                   >
-                    <div className="option-label">{optionLabel}</div>
-                    <div className="option-text">{opt}</div>
-                    {isSelected && <CheckCircle size={20} className="check-icon" />}
+                    <div className="option-label" style={{ marginTop: optImage ? '12px' : '0' }}>{optionLabel}</div>
+                    <div className="option-text" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      {optImage && (
+                        <div style={{ marginBottom: '12px', marginTop: '8px' }}>
+                          <img src={optImage} alt={`Opsi ${optionLabel}`} style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }} />
+                        </div>
+                      )}
+                      <div>{opt}</div>
+                    </div>
+                    {isSelected && <CheckCircle size={20} className="check-icon" style={{ marginTop: optImage ? '12px' : '0' }} />}
                   </div>
                 );
               })}

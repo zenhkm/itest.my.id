@@ -92,7 +92,7 @@ const AdminDashboard = () => {
   };
 
   const [showBankForm, setShowBankForm] = useState(false);
-  const [newBankQuestion, setNewBankQuestion] = useState({ subject: 'Umum', text: '', options: ['', '', '', '', ''], correctOption: 0 });
+  const [newBankQuestion, setNewBankQuestion] = useState({ subject: 'Umum', text: '', options: ['', '', '', '', ''], optionImages: ['', '', '', '', ''], correctOption: 0 });
 
   const handleSaveBankQuestion = async () => {
     if (!newBankQuestion.text || newBankQuestion.options.some(o => o.trim() === '')) {
@@ -109,7 +109,7 @@ const AdminDashboard = () => {
     if (success) {
       setShowBankForm(false);
       setEditingQuestionId(null);
-      setNewBankQuestion({ subject: 'Umum', text: '', options: ['', '', '', '', ''], correctOption: 0 });
+      setNewBankQuestion({ subject: 'Umum', text: '', options: ['', '', '', '', ''], optionImages: ['', '', '', '', ''], correctOption: 0 });
     }
   };
 
@@ -338,7 +338,7 @@ const AdminDashboard = () => {
       ...newExam,
       questions: [
         ...newExam.questions,
-        { id: Date.now(), text: '', options: ['', '', '', '', ''], correctOption: 0 }
+        { id: Date.now(), text: '', options: ['', '', '', '', ''], optionImages: ['', '', '', '', ''], correctOption: 0 }
       ]
     });
   };
@@ -353,6 +353,21 @@ const AdminDashboard = () => {
     const updatedQuestions = [...newExam.questions];
     updatedQuestions[qIndex].options[optIndex] = value;
     setNewExam({ ...newExam, questions: updatedQuestions });
+  };
+
+  const handleExamOptionImageChange = (qIndex, optIndex, url) => {
+    const updatedQuestions = [...newExam.questions];
+    if (!updatedQuestions[qIndex].optionImages) {
+      updatedQuestions[qIndex].optionImages = ['', '', '', '', ''];
+    }
+    updatedQuestions[qIndex].optionImages[optIndex] = url;
+    setNewExam({ ...newExam, questions: updatedQuestions });
+  };
+  
+  const handleBankOptionImageChange = (optIndex, url) => {
+    const newImages = [...(newBankQuestion.optionImages || ['', '', '', '', ''])];
+    newImages[optIndex] = url;
+    setNewBankQuestion({ ...newBankQuestion, optionImages: newImages });
   };
 
   const handleRemoveQuestion = (index) => {
@@ -372,7 +387,9 @@ const AdminDashboard = () => {
     const clonedQuestions = selectedBankQuestions.map((q, idx) => ({
       id: Date.now() + idx,
       text: q.text,
+      imageUrl: q.imageUrl || null,
       options: [...q.options],
+      optionImages: [...(q.optionImages || ['', '', '', '', ''])],
       correctOption: q.correctOption
     }));
 
@@ -998,21 +1015,39 @@ const AdminDashboard = () => {
 
                       <div className="options-grid">
                         {q.options.map((opt, optIndex) => (
-                          <div key={optIndex} className={`option-input-wrapper ${q.correctOption === optIndex ? 'is-correct' : ''}`}>
-                            <input
-                              type="radio"
-                              name={`correct-option-${qIndex}`}
-                              checked={q.correctOption === optIndex}
-                              onChange={() => handleQuestionChange(qIndex, 'correctOption', optIndex)}
-                              title="Pilih sebagai jawaban benar"
-                            />
-                            <div className="option-letter">{String.fromCharCode(65 + optIndex)}</div>
-                            <input
-                              type="text"
-                              placeholder={`Opsi ${String.fromCharCode(65 + optIndex)}`}
-                              value={opt}
-                              onChange={(e) => handleOptionChange(qIndex, optIndex, e.target.value)}
-                            />
+                          <div key={optIndex} className={`option-input-wrapper ${q.correctOption === optIndex ? 'is-correct' : ''}`} style={{ flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+                              <input
+                                type="radio"
+                                name={`correct-option-${qIndex}`}
+                                checked={q.correctOption === optIndex}
+                                onChange={() => handleQuestionChange(qIndex, 'correctOption', optIndex)}
+                                title="Pilih sebagai jawaban benar"
+                              />
+                              <div className="option-letter">{String.fromCharCode(65 + optIndex)}</div>
+                              <input
+                                type="text"
+                                style={{ flex: 1 }}
+                                placeholder={`Opsi ${String.fromCharCode(65 + optIndex)}`}
+                                value={opt}
+                                onChange={(e) => handleOptionChange(qIndex, optIndex, e.target.value)}
+                              />
+                              <label style={{ cursor: 'pointer', marginLeft: '8px', color: '#3b82f6', display: 'flex', alignItems: 'center' }} title="Sisipkan Gambar Opsi">
+                                <UploadCloud size={18} />
+                                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
+                                  const file = e.target.files[0];
+                                  if (!file) return;
+                                  const url = await handleImageUpload(file);
+                                  if (url) handleExamOptionImageChange(qIndex, optIndex, url);
+                                }} />
+                              </label>
+                            </div>
+                            {q.optionImages && q.optionImages[optIndex] && (
+                               <div style={{ width: '100%', marginLeft: '50px', marginTop: '8px', position: 'relative', display: 'inline-block' }}>
+                                  <img src={q.optionImages[optIndex]} alt={`Opsi ${String.fromCharCode(65 + optIndex)}`} style={{ maxHeight: '80px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }} />
+                                  <button onClick={() => handleExamOptionImageChange(qIndex, optIndex, '')} style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}><X size={12} /></button>
+                               </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1160,7 +1195,7 @@ const AdminDashboard = () => {
 
                 <button className="btn-primary-admin" onClick={() => {
                   setEditingQuestionId(null);
-                  setNewBankQuestion({ subject: 'Umum', text: '', options: ['', '', '', '', ''], correctOption: 0 });
+                  setNewBankQuestion({ subject: 'Umum', text: '', options: ['', '', '', '', ''], optionImages: ['', '', '', '', ''], correctOption: 0 });
                   setShowBankForm(!showBankForm);
                 }}>
                   <Plus size={18} />
@@ -1202,25 +1237,43 @@ const AdminDashboard = () => {
 
                 <div className="options-grid">
                   {newBankQuestion.options.map((opt, optIndex) => (
-                    <div key={optIndex} className={`option-input-wrapper ${newBankQuestion.correctOption === optIndex ? 'is-correct' : ''}`}>
-                      <input
-                        type="radio"
-                        name="bank-correct-option"
-                        checked={newBankQuestion.correctOption === optIndex}
-                        onChange={() => setNewBankQuestion({ ...newBankQuestion, correctOption: optIndex })}
-                        title="Tandai sebagai jawaban benar"
-                      />
-                      <div className="option-letter">{String.fromCharCode(65 + optIndex)}</div>
-                      <input
-                        type="text"
-                        placeholder={`Teks Opsi ${String.fromCharCode(65 + optIndex)}`}
-                        value={opt}
-                        onChange={(e) => {
-                          const newOpts = [...newBankQuestion.options];
-                          newOpts[optIndex] = e.target.value;
-                          setNewBankQuestion({ ...newBankQuestion, options: newOpts });
-                        }}
-                      />
+                    <div key={optIndex} className={`option-input-wrapper ${newBankQuestion.correctOption === optIndex ? 'is-correct' : ''}`} style={{ flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+                        <input
+                          type="radio"
+                          name="bank-correct-option"
+                          checked={newBankQuestion.correctOption === optIndex}
+                          onChange={() => setNewBankQuestion({ ...newBankQuestion, correctOption: optIndex })}
+                          title="Tandai sebagai jawaban benar"
+                        />
+                        <div className="option-letter">{String.fromCharCode(65 + optIndex)}</div>
+                        <input
+                          type="text"
+                          style={{ flex: 1 }}
+                          placeholder={`Teks Opsi ${String.fromCharCode(65 + optIndex)}`}
+                          value={opt}
+                          onChange={(e) => {
+                            const newOpts = [...newBankQuestion.options];
+                            newOpts[optIndex] = e.target.value;
+                            setNewBankQuestion({ ...newBankQuestion, options: newOpts });
+                          }}
+                        />
+                        <label style={{ cursor: 'pointer', marginLeft: '8px', color: '#3b82f6', display: 'flex', alignItems: 'center' }} title="Sisipkan Gambar Opsi">
+                          <UploadCloud size={18} />
+                          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            const url = await handleImageUpload(file);
+                            if (url) handleBankOptionImageChange(optIndex, url);
+                          }} />
+                        </label>
+                      </div>
+                      {newBankQuestion.optionImages && newBankQuestion.optionImages[optIndex] && (
+                         <div style={{ width: '100%', marginLeft: '50px', marginTop: '8px', position: 'relative', display: 'inline-block' }}>
+                            <img src={newBankQuestion.optionImages[optIndex]} alt={`Opsi ${String.fromCharCode(65 + optIndex)}`} style={{ maxHeight: '80px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }} />
+                            <button onClick={() => handleBankOptionImageChange(optIndex, '')} style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}><X size={12} /></button>
+                         </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1273,6 +1326,7 @@ const AdminDashboard = () => {
                                 subject: q.subject,
                                 text: q.text,
                                 imageUrl: q.imageUrl || '',
+                                optionImages: [...(q.optionImages || []), '', '', '', '', ''].slice(0, 5),
                                 options: [...(q.options || []), '', '', '', '', ''].slice(0, 5),
                                 correctOption: typeof q.correctOption !== 'undefined' ? q.correctOption : 0
                               });
