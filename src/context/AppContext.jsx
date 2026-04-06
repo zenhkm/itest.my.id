@@ -835,6 +835,33 @@ export const AppProvider = ({ children }) => {
   const handleCloudLogin = async (username, password) => {
     const loadingToast = toast.loading('Memverifikasi protokol kredensial...');
 
+    // 0. Cek autentikasi resmi (Supabase Auth) khusus untuk Admin yang login memakai email
+    if (username.includes('@')) {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: username,
+        password: password,
+      });
+
+      if (authData?.session) {
+        const supUser = authData.session.user;
+        const role = supUser.user_metadata?.role || 'admin';
+        const name = supUser.user_metadata?.name || 'Administrator';
+        const uName = supUser.user_metadata?.username || supUser.email;
+        const admin_id = supUser.user_metadata?.admin_id || supUser.email;
+
+        login({ username: uName, name, role, admin_id });
+        toast.success(`Selamat datang, ${name}.`, { id: loadingToast });
+        return role;
+      }
+
+      if (authError && authError.message.toLowerCase().includes('email not confirmed')) {
+        toast.error('Gagal masuk: Email belum diaktivasi. Silakan periksa pesan konfirmasi di kotak masuk/spam Anda.', { id: loadingToast, duration: 6000 });
+        return false;
+      }
+      // Jika Invalid Credentials, sistem akan melanjutkan perburuan ke tabel master 'users' dan 'students' 
+      // untuk berjaga-jaga apabila username staf kebetulan memuat simbol '@'.
+    }
+
     // 1. Cek secara brutal di tabel master staf (Admin, TU, Guru)
     const { data: staffData, error: staffError } = await supabase
       .from('users')
@@ -972,13 +999,13 @@ export const AppProvider = ({ children }) => {
         if (errMsg.includes('over the email rate limit')) {
           toast.error('Gagal: Permintaan telalu sering. Sistem keamanan Supabase menunda pengiriman (Rate Limit). Silakan tunggu sekitar sejam.', { id: loadingToast, duration: 8000 });
         } else if (errMsg.includes('already verified') || resendError.status === 422) {
-          toast.error('Gagal mengirim ulang. Jika akun ini sudah terverifikasi, silakan langsung Login di menu Log-in.', { id: loadingToast, duration: 6000 });
+          toast.error('Gagal mengirim ulang. Akun ini sudah terverifikasi, silakan langsung Login.', { id: loadingToast, duration: 6000 });
         } else {
           toast.error(`Pendaftaran ulang gagal: ${resendError.message}`, { id: loadingToast });
         }
         return false;
       } else {
-        toast.success('Pesan konfirmasi telah dikirim Ulang! Silakan cek kotak masuk atau spam email.', { id: loadingToast, duration: 8000 });
+        toast.success('Email Anda sudah terdaftar! Silakan lakukan aktivasi via tautan konfirmasi terbaru di kotak masuk/spam email Anda.', { id: loadingToast, duration: 8000 });
         return true;
       }
     } else {
