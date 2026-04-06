@@ -883,10 +883,10 @@ export const AppProvider = ({ children }) => {
       password: newUserData.password,
       options: {
         data: {
-          username: newUserData.username.toLowerCase(),
+          username: newUserData.email.toLowerCase(),
           name: newUserData.name,
           role: 'admin',
-          admin_id: newUserData.username.toLowerCase(),
+          admin_id: newUserData.email.toLowerCase(),
           status: 'Aktif'
         }
       }
@@ -897,7 +897,7 @@ export const AppProvider = ({ children }) => {
       toast.error(`Pendaftaran gagal: ${error.message}`, { id: loadingToast });
       return false;
     } else {
-      toast.success('Pendaftaran Sukses! Silakan cek kotak masuk Email Anda untuk mengonfirmasi akun.', { id: loadingToast, duration: 6000 });
+      toast.success('Pendaftaran Sukses! Silakan cek kotak masuk atau folder spam Email Anda untuk memverifikasi akun.', { id: loadingToast, duration: 6000 });
       // Perhatikan: Data ini tidak dimasukkan ke tabel 'users' sebelum terkonfirmasi.
       return true;
     }

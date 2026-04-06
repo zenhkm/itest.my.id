@@ -26,7 +26,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.username || !formData.password) {
-      toast.error('Mohon lengkapi NIS dan Kata Sandi Anda.');
+      toast.error('Mohon lengkapi identifier (Email/Username/NIS) dan Kata Sandi Anda.');
       return;
     }
     
@@ -74,14 +74,14 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="input-group">
-            <label htmlFor="username">NIS / Username</label>
+            <label htmlFor="username">Email / Username / NIS</label>
             <div className="input-wrapper">
               <User className="input-icon" size={20} />
               <input
                 type="text"
                 id="username"
                 name="username"
-                placeholder="Masukkan NIS atau Username"
+                placeholder="Masukkan Email, Username Guru, atau NIS"
                 value={formData.username}
                 onChange={handleChange}
                 required

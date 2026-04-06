@@ -13,7 +13,6 @@ const Register = () => {
   const [formData, setFormData] = useState({
     email: '',
     name: '',
-    username: '',
     password: '',
     role: 'admin' // Force as admin
   });
@@ -22,7 +21,7 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.email || !formData.name || !formData.username || !formData.password) {
+    if (!formData.email || !formData.name || !formData.password) {
       toast.error('Mohon isi semua bidang yang diperlukan.');
       return;
     }
@@ -117,19 +116,6 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="input-group" style={{ marginTop: '16px' }}>
-            <label>Username</label>
-            <div className="input-wrapper">
-              <User size={20} className="input-icon" />
-              <input 
-                type="text" 
-                placeholder="Gunakan awalan institusi, misal: smpn1_budi"
-                value={formData.username}
-                onChange={(e) => setFormData({...formData, username: e.target.value})}
-                required
-              />
-            </div>
-          </div>
 
           <div className="input-group" style={{ marginTop: '16px' }}>
             <label>Kata Sandi</label>
