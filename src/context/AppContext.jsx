@@ -103,9 +103,14 @@ export const AppProvider = ({ children }) => {
     fetchHistory(userData);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // 1. Bersihkan sesi internal aplikasi
     setUser(null);
     setHistory([]);
+    localStorage.removeItem('web_ujian_user');
+    
+    // 2. Bersihkan sesi resmi di memori Supabase agar tidak auto-terbaca setelah refresh
+    await supabase.auth.signOut();
   };
 
   // Exam Auto-Save Methods
@@ -963,7 +968,10 @@ export const AppProvider = ({ children }) => {
       });
 
       if (resendError) {
-        if (resendError.message.toLowerCase().includes('already verified') || resendError.status === 422 || resendError.message.toLowerCase().includes('over the email rate limit')) {
+        const errMsg = resendError.message.toLowerCase();
+        if (errMsg.includes('over the email rate limit')) {
+          toast.error('Gagal: Permintaan telalu sering. Sistem keamanan Supabase menunda pengiriman (Rate Limit). Silakan tunggu sekitar sejam.', { id: loadingToast, duration: 8000 });
+        } else if (errMsg.includes('already verified') || resendError.status === 422) {
           toast.error('Gagal mengirim ulang. Jika akun ini sudah terverifikasi, silakan langsung Login di menu Log-in.', { id: loadingToast, duration: 6000 });
         } else {
           toast.error(`Pendaftaran ulang gagal: ${resendError.message}`, { id: loadingToast });
