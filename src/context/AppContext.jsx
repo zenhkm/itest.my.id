@@ -30,6 +30,36 @@ export const AppProvider = ({ children }) => {
     }
   }, [user]);
 
+  // Handle Supabase Auth (Email Confirmation Redirects)
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // Jika ada hash panjang di URL akibat redirect konfirmasi email, bersihkan.
+        if (window.location.hash.includes('access_token')) {
+          window.history.replaceState(null, '', window.location.pathname);
+          toast.success('Email berhasil diverifikasi! Anda telah login secara otomatis.');
+        }
+
+        const supUser = session.user;
+        if (supUser && !user) {
+          const role = supUser.user_metadata?.role || 'admin';
+          const name = supUser.user_metadata?.name || 'Administrator';
+          const username = supUser.user_metadata?.username || supUser.email;
+          const admin_id = supUser.user_metadata?.admin_id || supUser.email;
+
+          setUser({ username, name, role, admin_id });
+          fetchHistory({ username, name, role, admin_id });
+        }
+      }
+    });
+
+    return () => {
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
+  }, []);
+
   const showConfirm = async (title, text, confirmTarget = 'Ya') => {
     const result = await Swal.fire({
       title: title || 'Konfirmasi Tindakan',
