@@ -941,13 +941,40 @@ export const AppProvider = ({ children }) => {
       }
     });
 
-    if (error) {
+    const isAlreadyRegistered = 
+      (error && error.message.toLowerCase().includes('already registered')) || 
+      (data?.user?.identities && data.user.identities.length === 0);
+
+    if (error && !isAlreadyRegistered) {
       console.error('Registration Error:', error);
       toast.error(`Pendaftaran gagal: ${error.message}`, { id: loadingToast });
       return false;
+    }
+
+    if (isAlreadyRegistered) {
+      toast.loading('Email telah terdaftar. Mengirim ulang verifikasi...', { id: loadingToast });
+      
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: newUserData.email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`
+        }
+      });
+
+      if (resendError) {
+        if (resendError.message.toLowerCase().includes('already verified') || resendError.status === 422 || resendError.message.toLowerCase().includes('over the email rate limit')) {
+          toast.error('Gagal mengirim ulang. Jika akun ini sudah terverifikasi, silakan langsung Login di menu Log-in.', { id: loadingToast, duration: 6000 });
+        } else {
+          toast.error(`Pendaftaran ulang gagal: ${resendError.message}`, { id: loadingToast });
+        }
+        return false;
+      } else {
+        toast.success('Pesan konfirmasi telah dikirim Ulang! Silakan cek kotak masuk atau spam email.', { id: loadingToast, duration: 8000 });
+        return true;
+      }
     } else {
       toast.success('Pendaftaran Sukses! Silakan cek kotak masuk atau folder spam Email Anda untuk memverifikasi akun.', { id: loadingToast, duration: 6000 });
-      // Perhatikan: Data ini tidak dimasukkan ke tabel 'users' sebelum terkonfirmasi.
       return true;
     }
   };
