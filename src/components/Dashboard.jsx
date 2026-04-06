@@ -9,16 +9,9 @@ import './Dashboard.css';
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { exams, history, user, logout, updateProfile, deleteProfile } = useContext(AppContext);
+  const { exams, history, user, logout } = useContext(AppContext);
 
-  const [showSettings, setShowSettings] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [profileSettings, setProfileSettings] = useState({
-    name: user?.name || '',
-    password: '',
-    avatar_url: user?.avatar_url || ''
-  });
-
   const studentName = user?.name || "Siswa Tanpa Nama";
   const studentClass = user?.class || "12 IPA 1";
   const activeExams = exams.filter(e => e.status === 'Aktif');
@@ -40,38 +33,6 @@ const Dashboard = () => {
 
   const handleStartExam = (id) => {
     navigate(`/exam/${id}`);
-  };
-
-  const handleProfileImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 1048576) { 
-         toast.error("Ukuran pasfoto terlalu besar. Maksimal 1MB!");
-         return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileSettings({...profileSettings, avatar_url: reader.result});
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSaveProfile = async () => {
-    const updates = {};
-    if (profileSettings.name && profileSettings.name !== user.name) updates.name = profileSettings.name;
-    if (profileSettings.password) updates.password = profileSettings.password; 
-    if (profileSettings.avatar_url && profileSettings.avatar_url !== user.avatar_url) updates.avatar_url = profileSettings.avatar_url;
-
-    if (Object.keys(updates).length > 0) {
-      const ok = await updateProfile(updates);
-      if (ok) {
-         setProfileSettings({...profileSettings, password: ''});
-         setShowSettings(false);
-      }
-    } else {
-      toast('Belum ada perubahan disetel.', { icon: 'ℹ️' });
-    }
   };
 
   return (
@@ -113,7 +74,7 @@ const Dashboard = () => {
                </button>
             </div>
 
-            <div className="user-profile" onClick={() => { setShowSettings(true); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer' }} title="Buka Pengaturan Profil">
+            <div className="user-profile" onClick={() => { navigate('/profile'); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer' }} title="Buka Pengaturan Profil">
               <div className="avatar" style={{ overflow: 'hidden' }}>
                 {user?.avatar_url ? (
                   <img src={user.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Avatar" />
@@ -128,7 +89,7 @@ const Dashboard = () => {
             </div>
             
             <div className="nav-buttons-group">
-               <button onClick={() => { setShowSettings(true); setIsMobileMenuOpen(false); }} className="history-button" title="Setelan Profil" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '10px 16px', borderRadius: '12px', cursor: 'pointer', color: 'var(--text-light)', fontWeight: '600' }}>
+               <button onClick={() => { navigate('/profile'); setIsMobileMenuOpen(false); }} className="history-button" title="Setelan Profil" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '10px 16px', borderRadius: '12px', cursor: 'pointer', color: 'var(--text-light)', fontWeight: '600' }}>
                  <Settings size={20} />
                  <span>Profil</span>
                </button>
@@ -250,48 +211,6 @@ const Dashboard = () => {
           </section>
         </main>
       </div>
-
-      {showSettings && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(0,0,0,0.6)', zIndex: 9999, backdropFilter: 'blur(5px)' }}>
-          <div className="glass-panel" style={{ width: '90%', maxWidth: '400px', padding: '24px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.2)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '1.2rem', color: 'var(--text-light)', margin: 0 }}>Pengaturan Akun</h2>
-              <button className="action-btn" onClick={() => setShowSettings(false)}><X size={20} /></button>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
-              <div style={{ width: '100px', height: '100px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px', border: '2px dashed rgba(255,255,255,0.2)' }}>
-                {profileSettings.avatar_url ? (
-                   <img src={profileSettings.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Preview" />
-                ) : (
-                   <User size={40} style={{ opacity: 0.3 }} />
-                )}
-              </div>
-              <label htmlFor="student-avatar" style={{ fontSize: '0.85rem', padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: '20px', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }}>
-                Ubah Pasfoto Baru
-              </label>
-              <input id="student-avatar" type="file" accept="image/*" onChange={handleProfileImageChange} style={{ display: 'none' }} />
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '8px', color: 'var(--text-muted)' }}>Nama Tampilan Siswa</label>
-              <input type="text" value={profileSettings.name} onChange={e => setProfileSettings({...profileSettings, name: e.target.value})} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: 'var(--text-light)', outline: 'none' }} />
-            </div>
-            
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '8px', color: 'var(--text-muted)' }}>Ubah Kata Sandi</label>
-              <input type="text" value={profileSettings.password} onChange={e => setProfileSettings({...profileSettings, password: e.target.value})} placeholder="Biarkan kosong jika tetap" style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: 'var(--text-light)', outline: 'none' }} />
-            </div>
-            
-            <button onClick={handleSaveProfile} style={{ width: '100%', padding: '14px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(14, 165, 233, 0.4)' }}>
-              <Save size={18} /> Simpan Profil
-            </button>
-            <button onClick={deleteProfile} style={{ marginTop: '12px', width: '100%', padding: '14px', background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.1)'; e.target.style.borderColor = '#ef4444'; }} onMouseLeave={(e) => { e.target.style.background = 'transparent'; e.target.style.borderColor = 'rgba(239, 68, 68, 0.3)'; }}>
-              <Trash2 size={18} /> Hapus Akun Secara Permanen
-            </button>
-          </div>
-        </div>
-      )}
     </motion.div>
   );
 };

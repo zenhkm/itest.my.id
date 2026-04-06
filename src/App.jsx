@@ -13,6 +13,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import Help from './components/Help';
 import Feedback from './components/Feedback';
 import Register from './components/Register';
+import StudentProfile from './components/StudentProfile';
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useContext(AppContext);
   
@@ -67,6 +68,12 @@ function App() {
           <Route path="/history" element={
               <ProtectedRoute allowedRoles={['student']}>
                 <History />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="/profile" element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <StudentProfile />
               </ProtectedRoute>
             } 
           />
