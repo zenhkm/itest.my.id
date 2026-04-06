@@ -65,6 +65,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { exams, addExam, deleteExam, logout, user, students, addStudent, deleteStudent, history, updateProfile, staffList, addStaff, deleteStaff, questions, addQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, deleteRoom } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [globalSearch, setGlobalSearch] = useState('');
 
   const [editingRoomId, setEditingRoomId] = useState(null);
   const [editingSchoolId, setEditingSchoolId] = useState(null);
@@ -588,6 +589,46 @@ const AdminDashboard = () => {
   const anMax = anTotalPeserta > 0 ? Math.max(...analyticsData.map(h => h.score)) : 0;
   const anMin = anTotalPeserta > 0 ? Math.min(...analyticsData.map(h => h.score)) : 0;
 
+  const searchTerm = globalSearch.toLowerCase();
+  
+  const filteredExams = exams.filter(e => 
+    e.title.toLowerCase().includes(searchTerm) || 
+    e.subject.toLowerCase().includes(searchTerm)
+  );
+  
+  const filteredStudents = students.filter(s => 
+    s.name.toLowerCase().includes(searchTerm) || 
+    s.nis.toLowerCase().includes(searchTerm) ||
+    s.class.toLowerCase().includes(searchTerm)
+  );
+
+  const filteredStaff = staffList.filter(s => 
+    s.name.toLowerCase().includes(searchTerm) || 
+    s.username.toLowerCase().includes(searchTerm) ||
+    s.role.toLowerCase().includes(searchTerm)
+  );
+
+  const filteredHistory = analyticsData.filter(h => 
+    (h.studentName || '').toLowerCase().includes(searchTerm) || 
+    h.examTitle.toLowerCase().includes(searchTerm) ||
+    h.subject.toLowerCase().includes(searchTerm)
+  );
+
+  const filteredQuestions = questions.filter(q => 
+    q.text.toLowerCase().includes(searchTerm) || 
+    q.subject.toLowerCase().includes(searchTerm)
+  );
+
+  const filteredSchools = schools.filter(s => 
+    s.name.toLowerCase().includes(searchTerm) || 
+    s.npsn.toLowerCase().includes(searchTerm)
+  );
+
+  const filteredRooms = rooms.filter(r => 
+    r.room_name.toLowerCase().includes(searchTerm) || 
+    r.room_code.toLowerCase().includes(searchTerm)
+  );
+
   return (
     <motion.div
       className="admin-container"
@@ -737,7 +778,7 @@ const AdminDashboard = () => {
             </button>
             <div className="search-bar" style={{ flex: 1 }}>
               <Search size={18} className="search-icon" />
-              <input type="text" placeholder="Cari data siswa atau ujian..." />
+              <input type="text" placeholder="Cari data siswa, ujian, staf..." value={globalSearch} onChange={(e) => setGlobalSearch(e.target.value)} />
             </div>
           </div>
           <div className="topbar-actions">
@@ -806,7 +847,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {exams.slice(0, 5).map(exam => (
+                    {filteredExams.slice(0, 5).map(exam => (
                       <tr key={exam.id}>
                         <td className="font-semibold">{exam.title}</td>
                         <td>{exam.subject}</td>
@@ -837,7 +878,7 @@ const AdminDashboard = () => {
                         </td>
                       </tr>
                     ))}
-                    {exams.length === 0 && (
+                    {filteredExams.length === 0 && (
                       <tr>
                         <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Belum ada ujian.</td>
                       </tr>
@@ -1138,7 +1179,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {analyticsData.map((h, i) => (
+                    {filteredHistory.map((h, i) => (
                       <tr key={i}>
                         <td className="font-semibold">{h.studentName || 'Anonim'}</td>
                         <td>
@@ -1150,7 +1191,7 @@ const AdminDashboard = () => {
                         <td>{new Date(h.date).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                       </tr>
                     ))}
-                    {analyticsData.length === 0 && (
+                    {filteredHistory.length === 0 && (
                       <tr>
                         <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Belum ada hasil ujian yang terekam.</td>
                       </tr>
@@ -1305,7 +1346,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {questions.filter(q => qBankSubjectFilter === 'all' || q.subject === qBankSubjectFilter).map(q => (
+                    {filteredQuestions.filter(q => qBankSubjectFilter === 'all' || q.subject === qBankSubjectFilter).map(q => (
                       <tr key={q.id}>
                         <td><span className="badge badge-active">{q.subject}</span></td>
                         <td><div style={{ maxHeight: '80px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{q.text}</div></td>
@@ -1340,7 +1381,7 @@ const AdminDashboard = () => {
                         </td>
                       </tr>
                     ))}
-                    {questions.length === 0 && (
+                    {filteredQuestions.length === 0 && (
                       <tr>
                         <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Bank soal masih kosong. Silakan impor dari format Excel (.xlsx).</td>
                       </tr>
@@ -1379,7 +1420,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {exams.map(exam => (
+                    {filteredExams.map(exam => (
                       <tr key={exam.id}>
                         <td className="font-semibold">{exam.title}</td>
                         <td>{exam.subject}</td>
@@ -1410,7 +1451,7 @@ const AdminDashboard = () => {
                         </td>
                       </tr>
                     ))}
-                    {exams.length === 0 && (
+                    {filteredExams.length === 0 && (
                       <tr>
                         <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Belum ada ujian.</td>
                       </tr>
@@ -1502,7 +1543,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {students.map(std => (
+                    {filteredStudents.map(std => (
                       <tr key={std.id}>
                         <td className="font-semibold">{std.nis}</td>
                         <td>{std.name}</td>
@@ -1523,7 +1564,7 @@ const AdminDashboard = () => {
                         </td>
                       </tr>
                     ))}
-                    {students.length === 0 && (
+                    {filteredStudents.length === 0 && (
                       <tr>
                         <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Belum ada siswa yang didaftarkan.</td>
                       </tr>
@@ -1609,7 +1650,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {staffList.map(st => (
+                    {filteredStaff.map(st => (
                       <tr key={st.id}>
                         <td className="font-semibold">{st.username}</td>
                         <td>{st.name}</td>
@@ -1630,7 +1671,7 @@ const AdminDashboard = () => {
                         </td>
                       </tr>
                     ))}
-                    {staffList.length === 0 && (
+                    {filteredStaff.length === 0 && (
                       <tr>
                         <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Belum ada data staf/pegawai direkrut.</td>
                       </tr>
@@ -1755,8 +1796,8 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {schools.length > 0 ? (
-                      schools.map((school) => (
+                    {filteredSchools.length > 0 ? (
+                      filteredSchools.map((school) => (
                         <tr key={school.id}>
                           <td className="font-semibold">{school.npsn}</td>
                           <td>
@@ -1864,8 +1905,8 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {rooms.length > 0 ? (
-                      rooms.map((room) => (
+                    {filteredRooms.length > 0 ? (
+                      filteredRooms.map((room) => (
                         <tr key={room.id}>
                           <td className="font-semibold">{room.room_code}</td>
                           <td><strong>{room.room_name}</strong></td>
