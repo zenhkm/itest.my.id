@@ -8,6 +8,8 @@ import Exam from './components/Exam';
 import History from './components/History';
 import AdminDashboard from './components/AdminDashboard';
 import Leaderboard from './components/Leaderboard';
+import About from './components/About';
+import PrivacyPolicy from './components/PrivacyPolicy';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useContext(AppContext);
@@ -42,6 +44,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           
           <Route path="/dashboard" element={
             <ProtectedRoute allowedRoles={['student']}>

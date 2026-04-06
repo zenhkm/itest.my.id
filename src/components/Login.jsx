@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { User, Lock, BookOpen, ArrowRight } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
@@ -156,6 +156,10 @@ const Login = () => {
         
         <div className="login-footer">
           <p>Sistem Ujian Terpadu &copy; 2026</p>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '12px' }}>
+            <Link to="/about" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--text-light)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}>Tentang Kami</Link>
+            <Link to="/privacy-policy" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--text-light)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}>Kebijakan Privasi</Link>
+          </div>
         </div>
       </div>
     </motion.div>
