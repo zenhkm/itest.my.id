@@ -120,23 +120,29 @@ export const AppProvider = ({ children }) => {
   // Fetch Data from Supabase
   useEffect(() => {
     let isMounted = true;
-    const initializeData = async () => {
-      setIsFetching(true);
-      await Promise.all([fetchExams(), fetchHistory(), fetchStudents(), fetchStaff(), fetchQuestions(), fetchSchools(), fetchRooms()]);
-      if (isMounted) {
-        setIsFetching(false);
-      }
-    };
-    
-    initializeData();
+    if (user && user.admin_id) {
+      const initializeData = async () => {
+        setIsFetching(true);
+        await Promise.all([fetchExams(user), fetchHistory(user), fetchStudents(user), fetchStaff(user), fetchQuestions(user), fetchSchools(user), fetchRooms(user)]);
+        if (isMounted) {
+          setIsFetching(false);
+        }
+      };
+      initializeData();
+    } else {
+      setExams([]); setHistory([]); setStudents([]); setStaffList([]); setQuestions([]); setSchools([]); setRooms([]);
+      setIsFetching(false);
+    }
 
     return () => { isMounted = false; };
-  }, []);
+  }, [user?.admin_id]);
 
-  const fetchExams = async () => {
+  const fetchExams = async (currentUser = user) => {
+    if (!currentUser || !currentUser.admin_id) return;
     const { data, error } = await supabase
       .from('exams')
       .select('*')
+      .eq('admin_id', currentUser.admin_id)
       .order('created_at', { ascending: false });
       
     if (error) {
@@ -148,11 +154,12 @@ export const AppProvider = ({ children }) => {
   };
 
   const fetchHistory = async (currentUser = user) => {
-    if (!currentUser) return; // Jangan tarik apabla belum login
+    if (!currentUser || !currentUser.admin_id) return;
 
     let query = supabase
       .from('history')
       .select('*')
+      .eq('admin_id', currentUser.admin_id)
       .order('date', { ascending: false });
       
     if (currentUser.role === 'student') {
@@ -182,10 +189,12 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (currentUser = user) => {
+    if (!currentUser || !currentUser.admin_id) return;
     const { data, error } = await supabase
       .from('students')
       .select('*')
+      .eq('admin_id', currentUser.admin_id)
       .order('name', { ascending: true });
       
     if (error) {
@@ -196,10 +205,12 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const fetchStaff = async () => {
+  const fetchStaff = async (currentUser = user) => {
+    if (!currentUser || !currentUser.admin_id) return;
     const { data, error } = await supabase
       .from('users')
       .select('*')
+      .eq('admin_id', currentUser.admin_id)
       .order('name', { ascending: true });
       
     if (error) {
@@ -210,10 +221,12 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = async (currentUser = user) => {
+    if (!currentUser || !currentUser.admin_id) return;
     const { data, error } = await supabase
       .from('questions')
       .select('*')
+      .eq('admin_id', currentUser.admin_id)
       .order('created_at', { ascending: false });
       
     if (error) {
@@ -229,10 +242,12 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const fetchSchools = async () => {
+  const fetchSchools = async (currentUser = user) => {
+    if (!currentUser || !currentUser.admin_id) return;
     const { data, error } = await supabase
       .from('schools')
       .select('*')
+      .eq('admin_id', currentUser.admin_id)
       .order('created_at', { ascending: false });
       
     if (error) {
@@ -302,10 +317,12 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const fetchRooms = async () => {
+  const fetchRooms = async (currentUser = user) => {
+    if (!currentUser || !currentUser.admin_id) return;
     const { data, error } = await supabase
       .from('rooms')
       .select('*')
+      .eq('admin_id', currentUser.admin_id)
       .order('created_at', { ascending: false });
       
     if (error) {
@@ -322,7 +339,8 @@ export const AppProvider = ({ children }) => {
       room_code: newRoom.room_code,
       room_name: newRoom.room_name,
       capacity: newRoom.capacity,
-      status: newRoom.status || 'Tersedia'
+      status: newRoom.status || 'Tersedia',
+      admin_id: user.admin_id
     }]);
     
     if (error) {
@@ -406,7 +424,8 @@ export const AppProvider = ({ children }) => {
       shuffle_options: newExam.shuffle_options || false,
       start_time: newExam.start_time || null,
       end_time: newExam.end_time || null,
-      show_discussion: newExam.show_discussion || false
+      show_discussion: newExam.show_discussion || false,
+      admin_id: user.admin_id
     };
 
     const loadingToast = toast.loading('Membuat sesi ujian baru...');
@@ -467,7 +486,8 @@ export const AppProvider = ({ children }) => {
       status: result.status,
       date: new Date().toISOString(),
       studentname: user?.name || 'Siswa Tanpa Nama',
-      details_snapshot: result.details || null
+      details_snapshot: result.details || null,
+      admin_id: user.admin_id
     };
 
     const localStateRecord = {
@@ -503,7 +523,8 @@ export const AppProvider = ({ children }) => {
       name: newStudent.name,
       class: newStudent.class,
       password: newStudent.password,
-      status: 'Aktif'
+      status: 'Aktif',
+      admin_id: user.admin_id
     };
 
     const loadingToast = toast.loading('Mendaftarkan siswa ke Cloud...');
@@ -531,7 +552,8 @@ export const AppProvider = ({ children }) => {
       name: s.name,
       class: s.class,
       password: String(s.password),
-      status: 'Aktif'
+      status: 'Aktif',
+      admin_id: user.admin_id
     }));
 
     const loadingToast = toast.loading('Mengimpor data siswa massal...');
@@ -594,7 +616,8 @@ export const AppProvider = ({ children }) => {
       name: newStaff.name,
       role: newStaff.role,
       password: newStaff.password,
-      status: 'Aktif'
+      status: 'Aktif',
+      admin_id: user.admin_id
     };
 
     const loadingToast = toast.loading('Mendaftarkan akses pegawai ke Cloud...');
@@ -660,7 +683,8 @@ export const AppProvider = ({ children }) => {
       imageurl: newQuestion.imageUrl || null,
       optionimages: newQuestion.optionImages || [],
       options: newQuestion.options,
-      correctoption: newQuestion.correctOption
+      correctoption: newQuestion.correctOption,
+      admin_id: user.admin_id
     };
     const qToInsertLocal = { ...qToInsertDB, imageUrl: newQuestion.imageUrl || null, optionImages: newQuestion.optionImages || [], correctOption: newQuestion.correctOption };
 
@@ -686,7 +710,8 @@ export const AppProvider = ({ children }) => {
       imageurl: q.imageUrl || null,
       optionimages: q.optionImages || [],
       options: q.options,
-      correctoption: q.correctOption
+      correctoption: q.correctOption,
+      admin_id: user.admin_id
     }));
 
     const loadingToast = toast.loading('Mengimpor massal ke Bank Soal...');
@@ -773,7 +798,7 @@ export const AppProvider = ({ children }) => {
         toast.error('Akses profil Anda sedang ditangguhkan.', { id: loadingToast });
         return false;
       }
-      login({ username: staffData.username, name: staffData.name, role: staffData.role, avatar_url: staffData.avatar_url });
+      login({ username: staffData.username, name: staffData.name, role: staffData.role, avatar_url: staffData.avatar_url, admin_id: staffData.admin_id });
       toast.success(`Hormat kami, ${staffData.name}.`, { id: loadingToast });
       return staffData.role;
     }
@@ -797,7 +822,7 @@ export const AppProvider = ({ children }) => {
     }
 
     // Sukses meretas status sebagai murid
-    login({ username: stdData.nis, name: stdData.name, role: 'student', class: stdData.class, avatar_url: stdData.avatar_url });
+    login({ username: stdData.nis, name: stdData.name, role: 'student', class: stdData.class, avatar_url: stdData.avatar_url, admin_id: stdData.admin_id });
     toast.success(`Selamat berjuang, ${stdData.name}!`, { id: loadingToast });
     return 'student';
   };
@@ -855,9 +880,10 @@ export const AppProvider = ({ children }) => {
       id: `usr_${Date.now()}`,
       username: newUserData.username.toLowerCase(),
       name: newUserData.name,
-      role: newUserData.role, // chosen role (guru, TU, admin)
+      role: 'admin', // strictly forced admin
       password: newUserData.password,
-      status: 'Aktif' // default active
+      status: 'Aktif', // default active
+      admin_id: newUserData.username.toLowerCase() // Head of tenant
     };
 
     const loadingToast = toast.loading('Memproses pendaftaran akun baru...');

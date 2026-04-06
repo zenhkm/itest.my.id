@@ -14,7 +14,7 @@ const Register = () => {
     name: '',
     username: '',
     password: '',
-    role: 'guru' // Default choice
+    role: 'admin' // Force as admin
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,30 +66,22 @@ const Register = () => {
             <label>Pengaturan Peran (Akses)</label>
             <div className="input-wrapper">
               <Briefcase size={20} className="input-icon" />
-              <select 
-                value={formData.role}
-                onChange={(e) => setFormData({...formData, role: e.target.value})}
-                required
+              <div 
                 style={{
                   width: '100%',
                   padding: '12px 12px 12px 42px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(56, 189, 248, 0.1)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
                   borderRadius: '12px',
-                  color: 'var(--text-light)',
+                  color: '#38bdf8',
                   fontSize: '1rem',
-                  outline: 'none',
-                  transition: 'border-color 0.3s ease, background 0.3s ease',
-                  appearance: 'none',
-                  cursor: 'pointer'
+                  fontWeight: '600'
                 }}
               >
-                <option value="guru" style={{ color: 'black' }}>Guru (Pengawas)</option>
-                <option value="TU" style={{ color: 'black' }}>Staf Tata Usaha</option>
-                <option value="admin" style={{ color: 'black' }}>Administrator Sistem</option>
-              </select>
+                Kepala Lembaga (Administrator)
+              </div>
             </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '6px' }}>Status Akun: Menunggu Verifikasi & Aktifasi</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '6px' }}>Posisi ini mengizinkan Anda untuk mengatur sekolah, staff, dan memantau ujian secara eksklusif dan terisolasi.</p>
           </div>
 
           <div className="input-group" style={{ marginTop: '16px' }}>
