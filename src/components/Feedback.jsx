@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, MessageSquare, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { supabase } from '../supabaseClient';
 import './InfoPages.css';
 
 const Feedback = () => {
@@ -18,7 +19,7 @@ const Feedback = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.message) {
       toast.error('Mohon isi nama dan pesan Anda.');
@@ -27,12 +28,28 @@ const Feedback = () => {
     
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Terima kasih! Feedback Anda telah terkirim.');
+    try {
+      const { error } = await supabase
+        .from('feedbacks')
+        .insert([
+          { 
+            name: formData.name, 
+            email: formData.email, 
+            role: formData.role, 
+            message: formData.message 
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast.success('Terima kasih! Feedback Anda telah tersimpan di sistem kami.');
       setFormData({ name: '', email: '', role: 'Siswa', message: '' });
+    } catch (error) {
+      console.error('Error submitting feedback:', error.message);
+      toast.error('Gagal mengirim feedback. Silakan coba lagi nanti.');
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (
