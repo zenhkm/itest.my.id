@@ -850,6 +850,33 @@ export const AppProvider = ({ children }) => {
     return false;
   };
 
+  const registerUser = async (newUserData) => {
+    const userToInsert = {
+      id: `usr_${Date.now()}`,
+      username: newUserData.username.toLowerCase(),
+      name: newUserData.name,
+      role: newUserData.role, // chosen role (guru, TU, admin)
+      password: newUserData.password,
+      status: 'Aktif' // default active
+    };
+
+    const loadingToast = toast.loading('Memproses pendaftaran akun baru...');
+    const { error } = await supabase.from('users').insert([userToInsert]);
+
+    if (error) {
+      console.error('Registration Error:', error);
+      if (error.code === '23505') { 
+         toast.error('Pendaftaran gagal. Nama Pengguna (Username) tersebut sudah terpakai!', { id: loadingToast });
+      } else {
+         toast.error('Server gagal memproses registrasi Anda.', { id: loadingToast });
+      }
+      return false;
+    } else {
+      toast.success('Pendaftaran Sukses! Silakan login sekarang.', { id: loadingToast });
+      return true;
+    }
+  };
+
   const handleGoogleLogin = async () => {
     toast.loading('Menyiapkan rute aman dari Google...', { duration: 1500 });
     const { error } = await supabase.auth.signInWithOAuth({
@@ -894,7 +921,7 @@ export const AppProvider = ({ children }) => {
       students, addStudent, deleteStudent, importStudents, updateStudent,
       staffList, addStaff, deleteStaff, updateStaff,
       questions, addQuestion, deleteQuestion, importQuestions, updateQuestion,
-      user, login, logout, handleCloudLogin, handleGoogleLogin, updateProfile, deleteProfile,
+      user, login, logout, handleCloudLogin, handleGoogleLogin, updateProfile, deleteProfile, registerUser,
       uploadImageToSupabase,
       fetchLeaderboard,
       showConfirm,

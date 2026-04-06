@@ -12,6 +12,7 @@ import About from './components/About';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import Help from './components/Help';
 import Feedback from './components/Feedback';
+import Register from './components/Register';
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useContext(AppContext);
   
@@ -45,6 +46,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/help" element={<Help />} />

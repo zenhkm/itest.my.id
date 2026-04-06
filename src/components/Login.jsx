@@ -127,7 +127,11 @@ const Login = () => {
               </>
             )}
           </button>
-
+          
+          <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '0.9rem' }}>
+            <span style={{ color: 'var(--text-muted)' }}>Bukan siswa? </span>
+            <Link to="/register" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 'bold' }}>Daftar sebagai Staf</Link>
+          </div>
 
         </form>
         
