@@ -10,7 +10,8 @@ import AdminDashboard from './components/AdminDashboard';
 import Leaderboard from './components/Leaderboard';
 import About from './components/About';
 import PrivacyPolicy from './components/PrivacyPolicy';
-
+import Help from './components/Help';
+import Feedback from './components/Feedback';
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useContext(AppContext);
   
@@ -46,6 +47,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/feedback" element={<Feedback />} />
           
           <Route path="/dashboard" element={
             <ProtectedRoute allowedRoles={['student']}>
