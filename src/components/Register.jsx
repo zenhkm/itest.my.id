@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Lock, BookOpen, ArrowRight, Briefcase } from 'lucide-react';
+import { User, Lock, BookOpen, ArrowRight, Briefcase, Mail } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -11,6 +11,7 @@ const Register = () => {
   const { registerUser } = useContext(AppContext);
   
   const [formData, setFormData] = useState({
+    email: '',
     name: '',
     username: '',
     password: '',
@@ -21,12 +22,16 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.username || !formData.password) {
+    if (!formData.email || !formData.name || !formData.username || !formData.password) {
       toast.error('Mohon isi semua bidang yang diperlukan.');
       return;
     }
-    if (formData.password.length < 5) {
-      toast.error('Kata sandi terlalu pendek. Gunakan minimal 5 karakter.');
+    if (!formData.email.includes('@')) {
+      toast.error('Alamat email tidak valid.');
+      return;
+    }
+    if (formData.password.length < 6) {
+      toast.error('Kata sandi terlalu pendek. Supabase membutuhkan minimal 6 karakter.');
       return;
     }
 
@@ -35,7 +40,7 @@ const Register = () => {
     setIsSubmitting(false);
 
     if (success) {
-      navigate('/login');
+      // Don't navigate directly, wait for them to check email.
     }
   };
 
@@ -82,6 +87,20 @@ const Register = () => {
               </div>
             </div>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '6px' }}>Posisi ini mengizinkan Anda untuk mengatur sekolah, staff, dan memantau ujian secara eksklusif dan terisolasi.</p>
+          </div>
+
+          <div className="input-group" style={{ marginTop: '16px' }}>
+            <label>Alamat Email</label>
+            <div className="input-wrapper">
+              <Mail size={20} className="input-icon" />
+              <input 
+                type="email" 
+                placeholder="Masukkan email aktif Anda"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                required
+              />
+            </div>
           </div>
 
           <div className="input-group" style={{ marginTop: '16px' }}>

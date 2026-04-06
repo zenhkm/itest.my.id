@@ -876,29 +876,29 @@ export const AppProvider = ({ children }) => {
   };
 
   const registerUser = async (newUserData) => {
-    const userToInsert = {
-      id: `usr_${Date.now()}`,
-      username: newUserData.username.toLowerCase(),
-      name: newUserData.name,
-      role: 'admin', // strictly forced admin
+    const loadingToast = toast.loading('Memproses pendaftaran akun & sinkronisasi Email...');
+    
+    const { data, error } = await supabase.auth.signUp({
+      email: newUserData.email,
       password: newUserData.password,
-      status: 'Aktif', // default active
-      admin_id: newUserData.username.toLowerCase() // Head of tenant
-    };
-
-    const loadingToast = toast.loading('Memproses pendaftaran akun baru...');
-    const { error } = await supabase.from('users').insert([userToInsert]);
+      options: {
+        data: {
+          username: newUserData.username.toLowerCase(),
+          name: newUserData.name,
+          role: 'admin',
+          admin_id: newUserData.username.toLowerCase(),
+          status: 'Aktif'
+        }
+      }
+    });
 
     if (error) {
       console.error('Registration Error:', error);
-      if (error.code === '23505') { 
-         toast.error('Pendaftaran gagal. Nama Pengguna (Username) tersebut sudah terpakai!', { id: loadingToast });
-      } else {
-         toast.error('Server gagal memproses registrasi Anda.', { id: loadingToast });
-      }
+      toast.error(`Pendaftaran gagal: ${error.message}`, { id: loadingToast });
       return false;
     } else {
-      toast.success('Pendaftaran Sukses! Silakan login sekarang.', { id: loadingToast });
+      toast.success('Pendaftaran Sukses! Silakan cek kotak masuk Email Anda untuk mengonfirmasi akun.', { id: loadingToast, duration: 6000 });
+      // Perhatikan: Data ini tidak dimasukkan ke tabel 'users' sebelum terkonfirmasi.
       return true;
     }
   };
