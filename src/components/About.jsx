@@ -88,6 +88,19 @@ const About = () => {
               Melalui modul Manajemen Klien Lembaga, setiap entitas dapat dengan mudah menyesuaikan profil dan pengaturan spesifik organisasinya.
             </p>
 
+            <h2>Pengembang Aplikasi</h2>
+            <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '12px', borderLeft: '4px solid #38bdf8', marginTop: '16px' }}>
+              <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <strong>Nama:</strong> Hakimz
+              </p>
+              <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <strong>Instagram:</strong> <a href="https://www.instagram.com/zainul.hakim" target="_blank" rel="noopener noreferrer">@zainul.hakim</a>
+              </p>
+              <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <strong>No HP / WA:</strong> <a href="https://wa.me/6285743399595" target="_blank" rel="noopener noreferrer">085743399595</a>
+              </p>
+            </div>
+
             <p style={{ marginTop: '40px', textAlign: 'center', opacity: 0.8 }}>
               © 2026 Sistem Ujian Terpadu. Inovasi untuk Evaluasi Digital yang Berintegritas.
             </p>
