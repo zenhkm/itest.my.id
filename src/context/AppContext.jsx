@@ -50,8 +50,23 @@ export const AppProvider = ({ children }) => {
           setUser({ username, name, role, admin_id });
           fetchHistory({ username, name, role, admin_id });
         }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setHistory([]);
       }
     });
+
+    // Tangkap kode Error di URL yang diberikan oleh Supabase (contoh: token kadaluarsa)
+    if (window.location.hash.includes('error=')) {
+      const urlParams = new URLSearchParams(window.location.hash.substring(1));
+      const errorDesc = urlParams.get('error_description');
+      if (errorDesc) {
+        toast.error('Gagal Verifikasi: ' + errorDesc.replace(/\+/g, ' '));
+      } else {
+        toast.error('Token verifikasi tidak valid atau telah kadaluarsa. Silakan mendaftar ulang.');
+      }
+      window.history.replaceState(null, '', window.location.pathname);
+    }
 
     return () => {
       if (authListener && authListener.subscription) {
@@ -912,6 +927,7 @@ export const AppProvider = ({ children }) => {
       email: newUserData.email,
       password: newUserData.password,
       options: {
+        emailRedirectTo: window.location.origin,
         data: {
           username: newUserData.email.toLowerCase(),
           name: newUserData.name,
