@@ -3,6 +3,9 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { supabase } from '../supabaseClient';
 
+// Simpan hash sesaat sebelum terhapus oleh React Router (Navigate component)
+const initialHash = typeof window !== 'undefined' ? window.location.hash : '';
+
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
@@ -34,8 +37,8 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        // Jika ada hash panjang di URL akibat redirect konfirmasi email, bersihkan.
-        if (window.location.hash.includes('access_token')) {
+        // Jika ada hash panjang di URL saat awal load akibat redirect konfirmasi email
+        if (initialHash.includes('access_token')) {
           window.history.replaceState(null, '', window.location.pathname);
           toast.success('Email berhasil diverifikasi! Anda telah login secara otomatis.');
         }
@@ -56,9 +59,9 @@ export const AppProvider = ({ children }) => {
       }
     });
 
-    // Tangkap kode Error di URL yang diberikan oleh Supabase (contoh: token kadaluarsa)
-    if (window.location.hash.includes('error=')) {
-      const urlParams = new URLSearchParams(window.location.hash.substring(1));
+    // Tangkap kode Error di URL (menggunakan initialHash yang belum terhapus)
+    if (initialHash.includes('error=')) {
+      const urlParams = new URLSearchParams(initialHash.substring(1));
       const errorDesc = urlParams.get('error_description');
       if (errorDesc) {
         toast.error('Gagal Verifikasi: ' + errorDesc.replace(/\+/g, ' '));
@@ -927,7 +930,7 @@ export const AppProvider = ({ children }) => {
       email: newUserData.email,
       password: newUserData.password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/login`,
         data: {
           username: newUserData.email.toLowerCase(),
           name: newUserData.name,
