@@ -683,7 +683,7 @@ const AdminDashboard = () => {
               onClick={() => handleTabClick('school-data')}
             >
               <Building size={20} />
-              <span>Data Sekolah</span>
+              <span>Data Lembaga</span>
             </button>
           )}
 
@@ -1692,8 +1692,8 @@ const AdminDashboard = () => {
           <div className="school-data-view fade-in">
             <div className="view-header flex-between">
               <div>
-                <h1>Manajemen Klien Sekolah</h1>
-                <p>Kelola profil institusi pendidikan yang berlangganan pada platform Anda.</p>
+                <h1>Manajemen Data Lembaga</h1>
+                <p>Kelola profil institusi atau lembaga yang berlangganan pada platform Anda.</p>
               </div>
               <button className="btn-primary-admin" onClick={() => {
                 setEditingSchoolId(null);
@@ -1708,20 +1708,20 @@ const AdminDashboard = () => {
               <div className="admin-recent-section glass-panel fade-in" style={{ marginBottom: '24px' }}>
                 <div className="form-grid">
                   <div className="form-group-admin">
-                    <label>Nama Institusi (Sekolah)</label>
-                    <input type="text" value={newSchool.name} onChange={e => setNewSchool({ ...newSchool, name: e.target.value })} placeholder="Contoh: SMA Negeri 1..." />
+                    <label>Nama Institusi / Lembaga</label>
+                    <input type="text" value={newSchool.name} onChange={e => setNewSchool({ ...newSchool, name: e.target.value })} placeholder="Contoh: SMA Negeri 1 / Universitas Tunas..." />
                   </div>
                   <div className="form-group-admin">
-                    <label>NPSN / NSS (Harus Unik)</label>
-                    <input type="text" value={newSchool.npsn} onChange={e => setNewSchool({ ...newSchool, npsn: e.target.value })} placeholder="Nomor Pokok Sekolah Nasional" />
+                    <label>NPSN / Nomor Induk Lembaga</label>
+                    <input type="text" value={newSchool.npsn} onChange={e => setNewSchool({ ...newSchool, npsn: e.target.value })} placeholder="Nomor unik identitas institusi" />
                   </div>
                   <div className="form-group-admin" style={{ gridColumn: '1 / -1' }}>
                     <label>Alamat Lengkap</label>
                     <textarea value={newSchool.address} onChange={e => setNewSchool({ ...newSchool, address: e.target.value })} placeholder="Alamat jalan, kelurahan, kecamatan, kota..." rows={3} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: 'var(--text-light)' }} />
                   </div>
                   <div className="form-group-admin">
-                    <label>Nama Kepala Sekolah</label>
-                    <input type="text" value={newSchool.principal} onChange={e => setNewSchool({ ...newSchool, principal: e.target.value })} placeholder="Nama lengkap serta gelar" />
+                    <label>Nama Pimpinan / Kepala Lembaga</label>
+                    <input type="text" value={newSchool.principal} onChange={e => setNewSchool({ ...newSchool, principal: e.target.value })} placeholder="Nama lengkap serta gelar pimpinan" />
                   </div>
                   <div className="form-group-admin">
                     <label>Telepon / Kontak</label>

@@ -259,7 +259,15 @@
 }
 
 /* Dashboard Views */
-.dashboard-view {
+.dashboard-view,
+.analytics-view,
+.question-bank-view,
+.exams-view,
+.students-view,
+.staff-view,
+.settings-view,
+.school-data-view,
+.rooms-data-view {
   padding: 40px;
   display: flex;
   flex-direction: column;
