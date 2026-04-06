@@ -827,6 +827,29 @@ export const AppProvider = ({ children }) => {
     return true;
   };
 
+  const deleteProfile = async () => {
+    if (!user) return false;
+    
+    if (await showConfirm('Hapus Akun Permanen', 'Peringatan: Seluruh riwayat ujian dan akses profil Anda akan musnah selamanya dari server. Setuju?', 'Ya, Hapus Permanen')) {
+      const table = user.role === 'student' ? 'students' : 'users';
+      const identifierCol = user.role === 'student' ? 'nis' : 'username';
+      const loadingToast = toast.loading('Memusnahkan identitas Anda dari server...');
+      
+      const { error } = await supabase.from(table).delete().eq(identifierCol, user.username);
+      
+      if (error) {
+        console.error("Profile deletion error:", error);
+        toast.error('Gagal menghapus akun. Hubungi Administrator Anda.', { id: loadingToast });
+        return false;
+      }
+      
+      toast.success('Akun berhasil dicabut secara permanen. Selamat tinggal!', { id: loadingToast });
+      logout();
+      return true;
+    }
+    return false;
+  };
+
   const handleGoogleLogin = async () => {
     toast.loading('Menyiapkan rute aman dari Google...', { duration: 1500 });
     const { error } = await supabase.auth.signInWithOAuth({
@@ -871,7 +894,7 @@ export const AppProvider = ({ children }) => {
       students, addStudent, deleteStudent, importStudents, updateStudent,
       staffList, addStaff, deleteStaff, updateStaff,
       questions, addQuestion, deleteQuestion, importQuestions, updateQuestion,
-      user, login, logout, handleCloudLogin, handleGoogleLogin, updateProfile,
+      user, login, logout, handleCloudLogin, handleGoogleLogin, updateProfile, deleteProfile,
       uploadImageToSupabase,
       fetchLeaderboard,
       showConfirm,

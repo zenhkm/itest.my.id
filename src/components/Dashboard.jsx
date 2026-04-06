@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Menu, Clock, BookOpen, FileText, CheckCircle, TrendingUp, PlayCircle, History as HistoryIcon, Settings, X, Save, Trophy } from 'lucide-react';
+import { LogOut, User, Menu, Clock, BookOpen, FileText, CheckCircle, TrendingUp, PlayCircle, History as HistoryIcon, Settings, X, Save, Trophy, Trash2 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -9,7 +9,7 @@ import './Dashboard.css';
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { exams, history, user, logout, updateProfile } = useContext(AppContext);
+  const { exams, history, user, logout, updateProfile, deleteProfile } = useContext(AppContext);
 
   const [showSettings, setShowSettings] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -285,6 +285,9 @@ const Dashboard = () => {
             
             <button onClick={handleSaveProfile} style={{ width: '100%', padding: '14px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(14, 165, 233, 0.4)' }}>
               <Save size={18} /> Simpan Profil
+            </button>
+            <button onClick={deleteProfile} style={{ marginTop: '12px', width: '100%', padding: '14px', background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.1)'; e.target.style.borderColor = '#ef4444'; }} onMouseLeave={(e) => { e.target.style.background = 'transparent'; e.target.style.borderColor = 'rgba(239, 68, 68, 0.3)'; }}>
+              <Trash2 size={18} /> Hapus Akun Secara Permanen
             </button>
           </div>
         </div>
