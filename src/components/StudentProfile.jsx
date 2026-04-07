@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, User, Save, Trash2, Settings } from 'lucide-react';
+import { ChevronLeft, User, Save, Trash2, Settings, Eye, EyeOff } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -15,6 +15,7 @@ const StudentProfile = () => {
     password: '',
     avatar_url: user?.avatar_url || ''
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
@@ -102,7 +103,32 @@ const StudentProfile = () => {
             
             <div style={{ marginBottom: '32px' }}>
               <label style={{ display: 'block', fontSize: '0.95rem', marginBottom: '8px', color: 'var(--text-muted)' }}>Perbarui Kata Sandi (Opsional)</label>
-              <input type="text" value={profileSettings.password} onChange={e => setProfileSettings({...profileSettings, password: e.target.value})} placeholder="Biarkan kosong jika tidak ingin diubah" style={{ width: '100%', padding: '14px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: 'var(--text-light)', outline: 'none', fontSize: '1rem' }} />
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  value={profileSettings.password} 
+                  onChange={e => setProfileSettings({...profileSettings, password: e.target.value})} 
+                  placeholder="Biarkan kosong jika tidak ingin diubah" 
+                  style={{ width: '100%', padding: '14px', paddingRight: '40px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: 'var(--text-light)', outline: 'none', fontSize: '1rem' }} 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '4px'
+                  }}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

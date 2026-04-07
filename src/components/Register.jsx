@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Lock, BookOpen, ArrowRight, Briefcase, Mail } from 'lucide-react';
+import { User, Lock, BookOpen, ArrowRight, Briefcase, Mail, Eye, EyeOff } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -18,6 +18,7 @@ const Register = () => {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,12 +123,30 @@ const Register = () => {
             <div className="input-wrapper">
               <Lock size={20} className="input-icon" />
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"} 
                 placeholder="Minimal 6 karakter"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                 required
               />
+              <button
+                type="button"
+                className="toggle-password-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px'
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 

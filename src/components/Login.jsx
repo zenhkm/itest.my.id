@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Lock, BookOpen, ArrowRight } from 'lucide-react';
+import { User, Lock, BookOpen, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -13,6 +13,7 @@ const Login = () => {
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { user, handleCloudLogin, handleGoogleLogin } = useContext(AppContext);
 
   // Jika sudah login, redirect sesuai peran
@@ -94,7 +95,7 @@ const Login = () => {
             <div className="input-wrapper">
               <Lock className="input-icon" size={20} />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 placeholder="Masukkan Kata Sandi"
@@ -102,6 +103,24 @@ const Login = () => {
                 onChange={handleChange}
                 required
               />
+              <button
+                type="button"
+                className="toggle-password-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px'
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
