@@ -4,12 +4,13 @@ import { Clock, AlertCircle, ChevronLeft, ChevronRight, CheckCircle, Flag, MapPi
 import { AppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { supabase } from '../supabaseClient';
 import './Exam.css';
 
 const Exam = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { exams, saveResult, isFetching, showConfirm, fetchExamSession, upsertExamSession, deleteExamSession } = useContext(AppContext);
+  const { exams, saveResult, isFetching, showConfirm, fetchExamSession, upsertExamSession, deleteExamSession, user } = useContext(AppContext);
 
   const examData = exams.find(e => e.id === id);
 
@@ -69,6 +70,9 @@ const Exam = () => {
   useEffect(() => {
     stateRef.current = { answers, flagged, timeLeft, currentIdx, shuffledQuestions };
   }, [answers, flagged, timeLeft, currentIdx, shuffledQuestions]);
+
+  // Always-fresh ref to forceSubmitResult – updated every render so broadcast callback never uses stale closure
+  const forceSubmitCallbackRef = React.useRef(null);
 
   // Debounced explicit sync on user action
   useEffect(() => {
@@ -163,6 +167,28 @@ const Exam = () => {
     await deleteExamSession(examData.id);
     navigate('/history');
   };
+
+  // Keep ref current so realtime callback always calls the latest forceSubmitResult closure
+  forceSubmitCallbackRef.current = forceSubmitResult;
+
+  // Broadcast listener – admin can force-end this student's session remotely
+  useEffect(() => {
+    if (!isSessionLoaded || isFinished || !examData || !user) return;
+    const channelName = `force-end-${user.username}-${examData.id}`;
+    const channel = supabase
+      .channel(channelName)
+      .on('broadcast', { event: 'force-end' }, () => {
+        toast.error('Admin menghentikan sesi ujian Anda! Jawaban dikumpulkan otomatis.', { duration: 6000, icon: '🛑' });
+        if (forceSubmitCallbackRef.current) {
+          forceSubmitCallbackRef.current();
+        }
+      })
+      .subscribe();
+    return () => {
+      try { supabase.removeChannel(channel); } catch (e) { /* ignore */ }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSessionLoaded, isFinished, examData?.id, user?.username]);
 
   const handleFinishExam = async () => {
     if (await showConfirm("Selesai Ujian", "Apakah Anda yakin ingin menyelesaikan ujian ini? Jawaban tidak dapat diubah lagi.", "Selesai Sekarang")) {

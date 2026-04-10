@@ -37,6 +37,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { supabase } from '../supabaseClient';
 import './AdminDashboard.css';
+import LiveRecord from './LiveRecord';
 
 const handleImageUpload = async (file) => {
   if (file.size > 2097152) {
@@ -738,6 +739,16 @@ const AdminDashboard = () => {
             </button>
           )}
 
+          {user?.role === 'admin' && (
+            <button
+              className={`nav-item ${activeTab === 'live-record' ? 'active' : ''}`}
+              onClick={() => handleTabClick('live-record')}
+            >
+              <Activity size={20} />
+              <span>Live Record</span>
+            </button>
+          )}
+
           <button
             className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
             onClick={() => handleTabClick('settings')}
@@ -1200,6 +1211,17 @@ const AdminDashboard = () => {
                 </table>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Live Record View */}
+        {activeTab === 'live-record' && user?.role === 'admin' && (
+          <div className="dashboard-view fade-in">
+            <div className="view-header">
+              <h1>Live Record - Pemantauan Ujian</h1>
+              <p>Memantau sesi ujian yang sedang berlangsung secara real-time.</p>
+            </div>
+            <LiveRecord />
           </div>
         )}
 

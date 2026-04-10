@@ -1,0 +1,16 @@
+.live-record { padding: 20px; }
+.view-header h1 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px 0; }
+.view-header p { margin: 0 0 16px 0; color: var(--text-muted); }
+.live-meta { display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap }
+.meta-item { background: rgba(255,255,255,0.03); padding:8px 12px; border-radius:10px; font-weight:600 }
+.live-table-wrap { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:8px; }
+.live-table { width:100%; border-collapse:collapse; }
+.live-table th, .live-table td { padding:10px 12px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.03); }
+.live-table thead th { font-size:0.95rem; color:var(--text-muted); }
+.live-table tbody tr:hover { background: rgba(255,255,255,0.01); }
+.live-loading { padding:18px; color:var(--text-muted); }
+.btn-force { background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer }
+.btn-force:hover { opacity:0.95 }
+@media (max-width:720px) {
+  .live-table th:nth-child(4), .live-table td:nth-child(4), .live-table th:nth-child(5), .live-table td:nth-child(5) { display:none }
+}
