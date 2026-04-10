@@ -21,6 +21,7 @@ export const AppProvider = ({ children }) => {
   const [questions, setQuestions] = useState([]);
   const [schools, setSchools] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [user, setUser] = useState(loadUser);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -176,14 +177,14 @@ export const AppProvider = ({ children }) => {
     if (user && user.admin_id) {
       const initializeData = async () => {
         setIsFetching(true);
-        await Promise.all([fetchExams(user), fetchHistory(user), fetchStudents(user), fetchStaff(user), fetchQuestions(user), fetchSchools(user), fetchRooms(user)]);
+        await Promise.all([fetchExams(user), fetchHistory(user), fetchStudents(user), fetchStaff(user), fetchQuestions(user), fetchSchools(user), fetchRooms(user), fetchGroups(user)]);
         if (isMounted) {
           setIsFetching(false);
         }
       };
       initializeData();
     } else {
-      setExams([]); setHistory([]); setStudents([]); setStaffList([]); setQuestions([]); setSchools([]); setRooms([]);
+      setExams([]); setHistory([]); setStudents([]); setStaffList([]); setQuestions([]); setSchools([]); setRooms([]); setGroups([]);
       setIsFetching(false);
     }
 
@@ -444,6 +445,68 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // ── GROUPS ──────────────────────────────────────────────
+  const fetchGroups = async (currentUser = user) => {
+    if (!currentUser || !currentUser.admin_id) return;
+    const { data, error } = await supabase
+      .from('groups')
+      .select('*')
+      .eq('admin_id', currentUser.admin_id)
+      .order('created_at', { ascending: false });
+    if (error) {
+      if (error.code !== '42P01') console.error('Error fetching groups:', error);
+    } else {
+      setGroups(data || []);
+    }
+  };
+
+  const addGroup = async (newGroup) => {
+    const groupToInsert = {
+      id: `grp_${Date.now()}`,
+      name: newGroup.name,
+      description: newGroup.description || '',
+      members: newGroup.members || [],
+      admin_id: user.admin_id
+    };
+    const loadingToast = toast.loading('Menambahkan kelompok...');
+    const { error } = await supabase.from('groups').insert([groupToInsert]);
+    if (error) {
+      console.error('Error adding group:', error);
+      toast.error('Gagal menambahkan kelompok.', { id: loadingToast });
+      return false;
+    }
+    setGroups(prev => [groupToInsert, ...prev]);
+    toast.success('Kelompok berhasil ditambahkan!', { id: loadingToast });
+    return true;
+  };
+
+  const updateGroup = async (id, updates) => {
+    const loadingToast = toast.loading('Memperbarui kelompok...');
+    const { error } = await supabase.from('groups').update(updates).eq('id', id);
+    if (error) {
+      console.error('Error updating group:', error);
+      toast.error('Gagal memperbarui kelompok.', { id: loadingToast });
+      return false;
+    }
+    setGroups(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
+    toast.success('Kelompok berhasil diperbarui!', { id: loadingToast });
+    return true;
+  };
+
+  const deleteGroup = async (id) => {
+    if (await showConfirm('Hapus Kelompok', 'Yakin ingin menghapus kelompok ini?')) {
+      const loadingToast = toast.loading('Menghapus kelompok...');
+      const { error } = await supabase.from('groups').delete().eq('id', id);
+      if (error) {
+        console.error('Error deleting group:', error);
+        toast.error('Gagal menghapus kelompok.', { id: loadingToast });
+      } else {
+        setGroups(prev => prev.filter(g => g.id !== id));
+        toast.success('Kelompok dihapus.', { id: loadingToast });
+      }
+    }
+  };
+
   const fetchLeaderboard = async (examId) => {
     if (!examId) return [];
     
@@ -478,6 +541,8 @@ export const AppProvider = ({ children }) => {
       start_time: newExam.start_time || null,
       end_time: newExam.end_time || null,
       show_discussion: newExam.show_discussion || false,
+      group_id: newExam.group_id || null,
+      room_id: newExam.room_id || null,
       admin_id: user.admin_id
     };
 
@@ -1064,6 +1129,7 @@ export const AppProvider = ({ children }) => {
       showConfirm,
       schools, addSchool, updateSchool, deleteSchool,
       rooms, addRoom, deleteRoom, updateRoom,
+      groups, addGroup, updateGroup, deleteGroup, fetchGroups,
       isFetching
     }}>
       {children}

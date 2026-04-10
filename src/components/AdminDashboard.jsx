@@ -31,7 +31,10 @@ import {
   Edit,
   Menu,
   X,
-  RefreshCw
+  RefreshCw,
+  Layers,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
@@ -65,7 +68,7 @@ const handleImageUpload = async (file) => {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { exams, addExam, deleteExam, logout, user, students, addStudent, deleteStudent, history, fetchHistory, updateProfile, staffList, addStaff, deleteStaff, questions, addQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, deleteRoom } = useContext(AppContext);
+  const { exams, addExam, deleteExam, logout, user, students, addStudent, deleteStudent, history, fetchHistory, updateProfile, staffList, addStaff, deleteStaff, questions, addQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, deleteRoom, groups, addGroup, updateGroup, deleteGroup } = useContext(AppContext);
   const [analyticsRefreshing, setAnalyticsRefreshing] = React.useState(false);
 
   const handleRefreshAnalytics = async () => {
@@ -91,6 +94,29 @@ const AdminDashboard = () => {
   const [newStaff, setNewStaff] = useState({ username: '', name: '', role: 'guru', password: '' });
 
   const [analyticsExamId, setAnalyticsExamId] = useState('all');
+  const [expandedAnalyticsExamId, setExpandedAnalyticsExamId] = useState(null);
+
+  const [showGroupForm, setShowGroupForm] = useState(false);
+  const [newGroup, setNewGroup] = useState({ name: '', description: '', members: [] });
+  const [editingGroupId, setEditingGroupId] = useState(null);
+
+  const handleSaveGroup = async () => {
+    if (!newGroup.name) {
+      toast.error('Nama kelompok wajib diisi.');
+      return;
+    }
+    let success = false;
+    if (editingGroupId) {
+      success = await updateGroup(editingGroupId, newGroup);
+    } else {
+      success = await addGroup(newGroup);
+    }
+    if (success) {
+      setNewGroup({ name: '', description: '', members: [] });
+      setShowGroupForm(false);
+      setEditingGroupId(null);
+    }
+  };
 
   const [qBankSubjectFilter, setQBankSubjectFilter] = useState('all');
   const [showBankModal, setShowBankModal] = useState(false);
@@ -336,7 +362,9 @@ const AdminDashboard = () => {
     shuffle_options: false,
     start_time: '',
     end_time: '',
-    show_discussion: false
+    show_discussion: false,
+    group_id: '',
+    room_id: ''
   });
 
   const handleLogout = () => {
@@ -502,7 +530,7 @@ const AdminDashboard = () => {
     }
 
     await addExam(newExam);
-    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false });
+    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, group_id: '', room_id: '' });
     setActiveTab('exams');
   };
 
@@ -598,6 +626,23 @@ const AdminDashboard = () => {
   const anRataRata = anTotalPeserta > 0 ? (analyticsData.reduce((acc, curr) => acc + curr.score, 0) / anTotalPeserta).toFixed(1) : 0;
   const anMax = anTotalPeserta > 0 ? Math.max(...analyticsData.map(h => h.score)) : 0;
   const anMin = anTotalPeserta > 0 ? Math.min(...analyticsData.map(h => h.score)) : 0;
+
+  // Per-exam grouped analytics
+  const examAnalyticsGroups = (() => {
+    const grouped = {};
+    filteredHistory.forEach(h => {
+      if (!grouped[h.examId]) grouped[h.examId] = { examId: h.examId, examTitle: h.examTitle, subject: h.subject, records: [] };
+      grouped[h.examId].records.push(h);
+    });
+    return Object.values(grouped).map(g => {
+      const scores = g.records.map(r => r.score);
+      const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : 0;
+      const max = scores.length > 0 ? Math.max(...scores) : 0;
+      const min = scores.length > 0 ? Math.min(...scores) : 0;
+      const passed = g.records.filter(r => r.score >= 70).length;
+      return { ...g, avg, max, min, passed, total: g.records.length };
+    });
+  })();
 
   const searchTerm = globalSearch.toLowerCase();
   
@@ -755,6 +800,16 @@ const AdminDashboard = () => {
             >
               <Activity size={20} />
               <span>Live Record</span>
+            </button>
+          )}
+
+          {user?.role === 'admin' && (
+            <button
+              className={`nav-item ${activeTab === 'groups-data' ? 'active' : ''}`}
+              onClick={() => handleTabClick('groups-data')}
+            >
+              <Layers size={20} />
+              <span>Data Kelompok</span>
             </button>
           )}
 
@@ -982,6 +1037,32 @@ const AdminDashboard = () => {
                     onChange={(e) => setNewExam({ ...newExam, end_time: e.target.value })}
                   />
                 </div>
+                <div className="form-group-admin">
+                  <label>Kelompok Peserta (Opsional)</label>
+                  <select
+                    value={newExam.group_id}
+                    onChange={(e) => setNewExam({ ...newExam, group_id: e.target.value })}
+                    style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', color: 'var(--text-light)', fontFamily: 'inherit' }}
+                  >
+                    <option value="">-- Semua / Tidak Dibatasi --</option>
+                    {groups.map(g => (
+                      <option key={g.id} value={g.id} style={{ color: 'black' }}>{g.name}{g.members?.length ? ` (${g.members.length} siswa)` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group-admin">
+                  <label>Ruangan Ujian (Opsional)</label>
+                  <select
+                    value={newExam.room_id}
+                    onChange={(e) => setNewExam({ ...newExam, room_id: e.target.value })}
+                    style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', color: 'var(--text-light)', fontFamily: 'inherit' }}
+                  >
+                    <option value="">-- Tidak Ditentukan --</option>
+                    {rooms.map(r => (
+                      <option key={r.id} value={r.id} style={{ color: 'black' }}>{r.room_name} ({r.room_code}) - Kap. {r.capacity}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="form-grid" style={{ marginTop: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
                 <div className="form-group-admin" style={{ flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
@@ -1195,31 +1276,67 @@ const AdminDashboard = () => {
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Nama Siswa</th>
-                      <th>Detail Ujian</th>
-                      <th>Skor</th>
-                      <th>Jawaban Benar</th>
-                      <th>Tanggal Submit</th>
+                      <th>Nama Ujian</th>
+                      <th>Mata Pelajaran</th>
+                      <th>Peserta</th>
+                      <th>Rata-rata</th>
+                      <th>Tertinggi / Terendah</th>
+                      <th>Lulus</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredHistory.map((h, i) => (
-                      <tr key={i}>
-                        <td className="font-semibold">{h.studentName || 'Anonim'}</td>
-                        <td>
-                          <div>{h.examTitle}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{h.subject}</div>
-                        </td>
-                        <td><div className={`badge badge-${h.score >= 70 ? 'active' : 'draft'}`} style={{ background: h.score >= 70 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: h.score >= 70 ? '#10b981' : '#ef4444' }}>{h.score}</div></td>
-                        <td>{h.correctAnswers} dari {h.totalQuestions} soal</td>
-                        <td>{new Date(h.date).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                      </tr>
-                    ))}
-                    {filteredHistory.length === 0 && (
-                      <tr>
-                        <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Belum ada hasil ujian yang terekam.</td>
-                      </tr>
+                    {examAnalyticsGroups.length === 0 && (
+                      <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Belum ada hasil ujian yang terekam.</td></tr>
                     )}
+                    {examAnalyticsGroups.map((eg) => (
+                      <React.Fragment key={eg.examId}>
+                        <tr
+                          style={{ cursor: 'pointer', background: expandedAnalyticsExamId === eg.examId ? 'rgba(59,130,246,0.07)' : undefined }}
+                          onClick={() => setExpandedAnalyticsExamId(prev => prev === eg.examId ? null : eg.examId)}
+                        >
+                          <td className="font-semibold">{eg.examTitle}</td>
+                          <td>{eg.subject}</td>
+                          <td>{eg.total} orang</td>
+                          <td>
+                            <div className={`badge`} style={{ background: eg.avg >= 70 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)', color: eg.avg >= 70 ? '#10b981' : '#ef4444', display: 'inline-block', padding: '4px 10px', borderRadius: '8px' }}>
+                              {eg.avg}
+                            </div>
+                          </td>
+                          <td style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                            <span style={{ color: '#10b981' }}>{eg.max}</span> / <span style={{ color: '#ef4444' }}>{eg.min}</span>
+                          </td>
+                          <td>{eg.passed} / {eg.total}</td>
+                          <td style={{ textAlign: 'center' }}>
+                            {expandedAnalyticsExamId === eg.examId ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          </td>
+                        </tr>
+                        {expandedAnalyticsExamId === eg.examId && eg.records.map((h, i) => (
+                          <tr key={i} style={{ background: 'rgba(255,255,255,0.015)', borderLeft: '3px solid rgba(59,130,246,0.4)' }}>
+                            <td style={{ paddingLeft: '28px', color: 'var(--text-light)' }}>
+                              <span style={{ color: 'var(--text-muted)', marginRight: '6px' }}>↳</span>
+                              {h.studentName || 'Anonim'}
+                            </td>
+                            <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</td>
+                            <td>-</td>
+                            <td>
+                              <div style={{ background: h.score >= 70 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)', color: h.score >= 70 ? '#10b981' : '#ef4444', display: 'inline-block', padding: '4px 10px', borderRadius: '8px', fontWeight: 600 }}>
+                                {h.score}
+                              </div>
+                            </td>
+                            <td style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>{h.correctAnswers} / {h.totalQuestions} soal</td>
+                            <td>
+                              <div style={{ display: 'inline-block', padding: '3px 8px', borderRadius: '6px', fontSize: '0.8rem', background: h.score >= 70 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: h.score >= 70 ? '#10b981' : '#ef4444' }}>
+                                {h.status || (h.score >= 70 ? 'Lulus' : 'Gagal')}
+                              </div>
+                            </td>
+                            <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                              {new Date(h.date).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -1235,6 +1352,107 @@ const AdminDashboard = () => {
               <p>Memantau sesi ujian yang sedang berlangsung secara real-time.</p>
             </div>
             <LiveRecord />
+          </div>
+        )}
+
+        {/* Groups Data View */}
+        {activeTab === 'groups-data' && user?.role === 'admin' && (
+          <div className="dashboard-view fade-in">
+            <div className="view-header flex-between" style={{ flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <h1>Data Kelompok</h1>
+                <p>Kelola kelompok peserta ujian untuk pengkoordiniran yang lebih mudah.</p>
+              </div>
+              <button className="btn-primary-admin" onClick={() => { setNewGroup({ name: '', description: '', members: [] }); setEditingGroupId(null); setShowGroupForm(true); }}>
+                <Plus size={18} /><span>Buat Kelompok</span>
+              </button>
+            </div>
+
+            {showGroupForm && (
+              <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 20px 0' }}>{editingGroupId ? 'Edit Kelompok' : 'Kelompok Baru'}</h3>
+                <div className="form-grid">
+                  <div className="form-group-admin">
+                    <label>Nama Kelompok</label>
+                    <input type="text" placeholder="Contoh: Kelompok A, IPA 1" value={newGroup.name} onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })} />
+                  </div>
+                  <div className="form-group-admin">
+                    <label>Keterangan (Opsional)</label>
+                    <input type="text" placeholder="Contoh: Kelas X ruang 1" value={newGroup.description} onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })} />
+                  </div>
+                </div>
+                <div className="form-group-admin" style={{ marginTop: '16px' }}>
+                  <label>Pilih Anggota Kelompok</label>
+                  <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', gap: '8px', padding: '12px', background: 'rgba(0,0,0,0.15)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    {students.length === 0 && <p style={{ color: 'var(--text-muted)', margin: 0 }}>Belum ada data siswa.</p>}
+                    {students.map(s => (
+                      <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '6px 10px', background: newGroup.members.includes(s.nis) ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)', borderRadius: '8px', border: newGroup.members.includes(s.nis) ? '1px solid rgba(59,130,246,0.4)' : '1px solid transparent', transition: 'all 0.2s' }}>
+                        <input
+                          type="checkbox"
+                          checked={newGroup.members.includes(s.nis)}
+                          onChange={(e) => {
+                            if (e.target.checked) setNewGroup(prev => ({ ...prev, members: [...prev.members, s.nis] }));
+                            else setNewGroup(prev => ({ ...prev, members: prev.members.filter(n => n !== s.nis) }));
+                          }}
+                          style={{ accentColor: '#3b82f6' }}
+                        />
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{s.name}</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{s.nis} · {s.class}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: '8px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>{newGroup.members.length} siswa dipilih</div>
+                </div>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                  <button className="btn-primary-admin" onClick={handleSaveGroup}><Save size={16} /><span>{editingGroupId ? 'Simpan Perubahan' : 'Simpan Kelompok'}</span></button>
+                  <button className="btn-secondary-admin" onClick={() => { setShowGroupForm(false); setEditingGroupId(null); }}>Batal</button>
+                </div>
+              </div>
+            )}
+
+            <div className="admin-recent-section glass-panel">
+              <div className="table-responsive">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Nama Kelompok</th>
+                      <th>Keterangan</th>
+                      <th>Jumlah Anggota</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groups.length === 0 && (
+                      <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Belum ada kelompok yang dibuat.</td></tr>
+                    )}
+                    {groups.map(g => (
+                      <tr key={g.id}>
+                        <td className="font-semibold">{g.name}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{g.description || '-'}</td>
+                        <td>
+                          <div style={{ display: 'inline-block', padding: '4px 12px', background: 'rgba(59,130,246,0.15)', color: '#3b82f6', borderRadius: '8px', fontWeight: 600 }}>
+                            {Array.isArray(g.members) ? g.members.length : 0} siswa
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button className="btn-secondary-admin" style={{ padding: '6px 10px' }} onClick={() => {
+                              setNewGroup({ name: g.name, description: g.description || '', members: Array.isArray(g.members) ? [...g.members] : [] });
+                              setEditingGroupId(g.id);
+                              setShowGroupForm(true);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}><Edit size={15} /></button>
+                            <button className="btn-secondary-admin" style={{ padding: '6px 10px', borderColor: '#ef4444', color: '#ef4444' }} onClick={() => deleteGroup(g.id)}><Trash2 size={15} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
