@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { AppContext } from '../context/AppContext';
-import { Activity, User, Clock, FileText, Zap } from 'lucide-react';
+import { Activity, RefreshCw } from 'lucide-react';
 import './LiveRecord.css';
 import toast from 'react-hot-toast';
 
@@ -18,37 +18,47 @@ const LiveRecord = () => {
   const { exams = [], students = [], user, showConfirm } = useContext(AppContext);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadSessions = useCallback(async (opts = {}) => {
+    if (!exams || exams.length === 0) { setSessions([]); return; }
+    if (opts.showSpinner) setRefreshing(true);
+    else setLoading(true);
+    try {
+      const examIds = exams.map(e => e.id).filter(Boolean);
+      if (examIds.length === 0) return setSessions([]);
+      const { data, error } = await supabase
+        .from('exam_sessions')
+        .select('*')
+        .in('exam_id', examIds);
+      if (error) { console.error('Error fetching exam_sessions:', error); }
+      else { setSessions((data || []).map(s => ({ ...s, examTitle: exams.find(e => e.id === s.exam_id)?.title || s.exam_id }))); }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); setRefreshing(false); }
+  }, [exams]);
+
+  const handleManualRefresh = async () => {
+    await loadSessions({ showSpinner: true });
+    toast.success('Data sesi diperbarui.');
+  };
 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      if (!exams || exams.length === 0) {
-        setSessions([]);
-        return;
-      }
+      if (!exams || exams.length === 0) { setSessions([]); return; }
       setLoading(true);
       try {
         const examIds = exams.map(e => e.id).filter(Boolean);
         if (examIds.length === 0) return setSessions([]);
-
         const { data, error } = await supabase
           .from('exam_sessions')
           .select('*')
           .in('exam_id', examIds);
-
-        if (error) {
-          console.error('Error fetching exam_sessions:', error);
-        } else if (mounted) {
-          const mapped = (data || []).map(s => ({ ...s, examTitle: exams.find(e => e.id === s.exam_id)?.title || s.exam_id }));
-          setSessions(mapped);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+        if (error) { console.error('Error fetching exam_sessions:', error); }
+        else if (mounted) { setSessions((data || []).map(s => ({ ...s, examTitle: exams.find(e => e.id === s.exam_id)?.title || s.exam_id }))); }
+      } catch (err) { console.error(err); }
+      finally { setLoading(false); }
     };
-
     load();
     return () => { mounted = false; };
   }, [exams]);
@@ -147,6 +157,15 @@ const LiveRecord = () => {
       <div className="live-meta">
         <div className="meta-item">Total Sesi: <strong>{sessions.length}</strong></div>
         <div className="meta-item">Ujian Aktif: <strong>{new Set(sessions.map(s => s.exam_id)).size}</strong></div>
+        <button
+          className="btn-refresh-live"
+          onClick={handleManualRefresh}
+          disabled={refreshing}
+          title="Tarik data sesi terbaru"
+        >
+          <RefreshCw size={15} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+          {refreshing ? 'Memuat...' : 'Tarik Data'}
+        </button>
       </div>
 
       <div className="live-table-wrap">

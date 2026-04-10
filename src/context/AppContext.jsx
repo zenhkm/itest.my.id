@@ -1053,7 +1053,7 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{ 
       exams, setExams, addExam, deleteExam, updateExam,
-      history, saveResult,
+      history, saveResult, fetchHistory,
       fetchExamSession, upsertExamSession, deleteExamSession,
       students, addStudent, deleteStudent, importStudents, updateStudent,
       staffList, addStaff, deleteStaff, updateStaff,

@@ -30,7 +30,8 @@ import {
   MapPin,
   Edit,
   Menu,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
@@ -64,7 +65,15 @@ const handleImageUpload = async (file) => {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { exams, addExam, deleteExam, logout, user, students, addStudent, deleteStudent, history, updateProfile, staffList, addStaff, deleteStaff, questions, addQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, deleteRoom } = useContext(AppContext);
+  const { exams, addExam, deleteExam, logout, user, students, addStudent, deleteStudent, history, fetchHistory, updateProfile, staffList, addStaff, deleteStaff, questions, addQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, deleteRoom } = useContext(AppContext);
+  const [analyticsRefreshing, setAnalyticsRefreshing] = React.useState(false);
+
+  const handleRefreshAnalytics = async () => {
+    setAnalyticsRefreshing(true);
+    await fetchHistory();
+    setAnalyticsRefreshing(false);
+    toast.success('Data laporan diperbarui.');
+  };
   const [activeTab, setActiveTab] = useState('dashboard');
   const [globalSearch, setGlobalSearch] = useState('');
 
@@ -1132,6 +1141,10 @@ const AdminDashboard = () => {
                   ))}
                 </select>
                 <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn-secondary-admin" onClick={handleRefreshAnalytics} disabled={analyticsRefreshing} title="Tarik Data Terbaru" style={{ padding: '10px 14px', borderColor: '#38bdf8', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <RefreshCw size={16} style={{ animation: analyticsRefreshing ? 'spin 1s linear infinite' : 'none' }} />
+                    <span className="hide-on-mobile">{analyticsRefreshing ? 'Memuat...' : 'Tarik Data'}</span>
+                  </button>
                   <button className="btn-secondary-admin" onClick={() => navigate('/leaderboard')} title="Papan Peringkat Top 10" style={{ padding: '10px 16px', background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(251, 191, 36, 0.02))', borderColor: '#fbbf24', color: '#fbbf24', fontWeight: 'bold' }}>
                     <Trophy size={18} />
                     <span className="hide-on-mobile" style={{ marginLeft: '4px' }}>Peringkat</span>
