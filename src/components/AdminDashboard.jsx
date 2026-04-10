@@ -627,23 +627,6 @@ const AdminDashboard = () => {
   const anMax = anTotalPeserta > 0 ? Math.max(...analyticsData.map(h => h.score)) : 0;
   const anMin = anTotalPeserta > 0 ? Math.min(...analyticsData.map(h => h.score)) : 0;
 
-  // Per-exam grouped analytics
-  const examAnalyticsGroups = (() => {
-    const grouped = {};
-    filteredHistory.forEach(h => {
-      if (!grouped[h.examId]) grouped[h.examId] = { examId: h.examId, examTitle: h.examTitle, subject: h.subject, records: [] };
-      grouped[h.examId].records.push(h);
-    });
-    return Object.values(grouped).map(g => {
-      const scores = g.records.map(r => r.score);
-      const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : 0;
-      const max = scores.length > 0 ? Math.max(...scores) : 0;
-      const min = scores.length > 0 ? Math.min(...scores) : 0;
-      const passed = g.records.filter(r => r.score >= 70).length;
-      return { ...g, avg, max, min, passed, total: g.records.length };
-    });
-  })();
-
   const searchTerm = globalSearch.toLowerCase();
   
   const filteredExams = exams.filter(e => 
@@ -668,6 +651,23 @@ const AdminDashboard = () => {
     h.examTitle.toLowerCase().includes(searchTerm) ||
     h.subject.toLowerCase().includes(searchTerm)
   );
+
+  // Per-exam grouped analytics (depends on filteredHistory - must be defined after)
+  const examAnalyticsGroups = (() => {
+    const grouped = {};
+    filteredHistory.forEach(h => {
+      if (!grouped[h.examId]) grouped[h.examId] = { examId: h.examId, examTitle: h.examTitle, subject: h.subject, records: [] };
+      grouped[h.examId].records.push(h);
+    });
+    return Object.values(grouped).map(g => {
+      const scores = g.records.map(r => r.score);
+      const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : 0;
+      const max = scores.length > 0 ? Math.max(...scores) : 0;
+      const min = scores.length > 0 ? Math.min(...scores) : 0;
+      const passed = g.records.filter(r => r.score >= 70).length;
+      return { ...g, avg, max, min, passed, total: g.records.length };
+    });
+  })();
 
   const filteredQuestions = questions.filter(q => 
     q.text.toLowerCase().includes(searchTerm) || 
