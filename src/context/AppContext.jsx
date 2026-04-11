@@ -1276,7 +1276,7 @@ export const AppProvider = ({ children }) => {
         return false;
       } else {
         toast.dismiss(loadingToast);
-        return true;
+        return 'already_unverified';
       }
     } else {
       toast.dismiss(loadingToast);

@@ -19,11 +19,11 @@ const Register = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [alreadyVerified, setAlreadyVerified] = useState(false);
+  const [registerWarning, setRegisterWarning] = useState(null); // null | 'already_verified' | 'already_unverified'
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setAlreadyVerified(false);
+    setRegisterWarning(null);
     if (!formData.email || !formData.name || !formData.password) {
       toast.error('Mohon isi semua bidang yang diperlukan.');
       return;
@@ -41,8 +41,8 @@ const Register = () => {
     const result = await registerUser(formData);
     setIsSubmitting(false);
 
-    if (result === 'already_verified') {
-      setAlreadyVerified(true);
+    if (result === 'already_verified' || result === 'already_unverified') {
+      setRegisterWarning(result);
       return;
     }
     if (result) {
@@ -156,7 +156,7 @@ const Register = () => {
             </div>
           </div>
 
-          {alreadyVerified && (
+          {registerWarning === 'already_verified' && (
             <div style={{
               marginTop: '16px',
               padding: '14px 16px',
@@ -175,6 +175,27 @@ const Register = () => {
                 <span style={{ color: 'var(--text-muted)' }}> sudah aktif. Silakan </span>
                 <Link to="/login" style={{ color: '#60a5fa', fontWeight: 600 }}>masuk ke halaman Login</Link>
                 <span style={{ color: 'var(--text-muted)' }}> atau gunakan email lain untuk mendaftar.</span>
+              </div>
+            </div>
+          )}
+
+          {registerWarning === 'already_unverified' && (
+            <div style={{
+              marginTop: '16px',
+              padding: '14px 16px',
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.4)',
+              borderRadius: '12px',
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'flex-start'
+            }}>
+              <AlertTriangle size={18} style={{ color: '#60a5fa', flexShrink: 0, marginTop: '1px' }} />
+              <div style={{ fontSize: '0.875rem', lineHeight: 1.6 }}>
+                <strong style={{ color: '#60a5fa', display: 'block', marginBottom: '4px' }}>Email sudah terdaftar, belum diverifikasi</strong>
+                <span style={{ color: 'var(--text-muted)' }}>Kami telah mengirim ulang tautan verifikasi ke </span>
+                <strong style={{ color: '#e2e8f0' }}>{formData.email}</strong>
+                <span style={{ color: 'var(--text-muted)' }}>. Silakan cek kotak masuk atau folder Spam Anda.</span>
               </div>
             </div>
           )}
