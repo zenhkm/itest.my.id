@@ -321,7 +321,8 @@ export const AppProvider = ({ children }) => {
       address: newSchool.address,
       principal: newSchool.principal,
       phone: newSchool.phone,
-      status: newSchool.status || 'Aktif'
+      status: newSchool.status || 'Aktif',
+      admin_id: user.admin_id
     }]);
     
     if (error) {

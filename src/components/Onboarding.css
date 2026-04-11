@@ -229,3 +229,35 @@
     font-size: 17px;
   }
 }
+
+/* ── Minimized floating pill ─────────────────────────────── */
+.ob-pill {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
+  transition: transform 0.2s, opacity 0.2s;
+  animation: ob-pill-in 0.3s ease-out;
+}
+
+.ob-pill:hover {
+  transform: translateY(-2px);
+  opacity: 0.92;
+}
+
+@keyframes ob-pill-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

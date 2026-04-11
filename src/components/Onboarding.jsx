@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Rocket } from 'lucide-react';
+import { ArrowRight, Rocket, BookOpen, ChevronUp } from 'lucide-react';
 import './Onboarding.css';
 
 const STEPS = [
@@ -42,10 +42,11 @@ const STEPS = [
   },
 ];
 
-const Onboarding = ({ onNavigate, onComplete }) => {
+const Onboarding = ({ onNavigate, onComplete, stepDoneKey }) => {
   // -1 = welcome screen, 0-5 = steps
   const [stepIndex, setStepIndex] = useState(-1);
   const [direction, setDirection] = useState(1);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const goNext = () => {
     const nextIndex = stepIndex + 1;
@@ -56,6 +57,21 @@ const Onboarding = ({ onNavigate, onComplete }) => {
       setStepIndex(nextIndex);
     }
   };
+
+  // When a step action is completed externally, auto-advance and re-show overlay
+  useEffect(() => {
+    if (!stepDoneKey || stepIndex < 0) return;
+    if (STEPS[stepIndex]?.key === stepDoneKey) {
+      const nextIndex = stepIndex + 1;
+      setDirection(1);
+      if (nextIndex >= STEPS.length) {
+        onComplete();
+      } else {
+        setStepIndex(nextIndex);
+        setIsMinimized(false);
+      }
+    }
+  }, [stepDoneKey]);
 
   const goPrev = () => {
     if (stepIndex <= 0) {
@@ -72,7 +88,9 @@ const Onboarding = ({ onNavigate, onComplete }) => {
       setDirection(1);
       setStepIndex(0);
     } else {
+      // Navigate to the tab then minimize — don't complete onboarding
       onNavigate(STEPS[stepIndex].key);
+      setIsMinimized(true);
     }
   };
 
@@ -84,6 +102,17 @@ const Onboarding = ({ onNavigate, onComplete }) => {
 
   const isWelcome = stepIndex === -1;
   const isLastStep = stepIndex === STEPS.length - 1;
+
+  // Minimized: show a floating pill in the bottom-right corner
+  if (isMinimized) {
+    return (
+      <button className="ob-pill" onClick={() => setIsMinimized(false)}>
+        <BookOpen size={15} />
+        <span>Panduan — Langkah {stepIndex + 1}/{STEPS.length}</span>
+        <ChevronUp size={13} />
+      </button>
+    );
+  }
 
   return (
     <div className="onboarding-overlay">

@@ -89,9 +89,16 @@ const AdminDashboard = () => {
     setShowOnboarding(false);
   };
 
+  // handleOnboardingNavigate: only navigates — Onboarding minimizes itself
   const handleOnboardingNavigate = (tab) => {
     handleTabClick(tab);
-    handleOnboardingComplete();
+  };
+
+  // Signal to Onboarding that the current step's action is done
+  const [onboardingStepDoneKey, setOnboardingStepDoneKey] = useState(null);
+  const handleOnboardingStepDone = (key) => {
+    setOnboardingStepDoneKey(key);
+    setTimeout(() => setOnboardingStepDoneKey(null), 100);
   };
   // ─────────────────────────────────────────────────────
 
@@ -164,6 +171,7 @@ const AdminDashboard = () => {
       setNewClass({ class_name: '', grade: '', description: '' });
       setShowClassForm(false);
       setEditingClassId(null);
+      if (!editingClassId && showOnboarding) handleOnboardingStepDone('classes-data');
     }
   };
 
@@ -246,6 +254,7 @@ const AdminDashboard = () => {
       setShowBankForm(false);
       setEditingQuestionId(null);
       setNewBankQuestion({ subject: 'Umum', text: '', options: ['', '', '', '', ''], optionImages: ['', '', '', '', ''], correctOption: 0 });
+      if (!editingQuestionId && showOnboarding) handleOnboardingStepDone('question-bank');
     }
   };
 
@@ -270,6 +279,7 @@ const AdminDashboard = () => {
       setNewRoom({ room_code: '', room_name: '', capacity: 30, status: 'Tersedia' });
       setShowRoomForm(false);
       setEditingRoomId(null);
+      if (!editingRoomId && showOnboarding) handleOnboardingStepDone('rooms-data');
     }
   };
 
@@ -288,6 +298,7 @@ const AdminDashboard = () => {
       setNewSchool({ name: '', npsn: '', address: '', principal: '', phone: '', status: 'Aktif' });
       setShowSchoolForm(false);
       setEditingSchoolId(null);
+      if (!editingSchoolId && showOnboarding) handleOnboardingStepDone('school-data');
     }
   };
 
@@ -353,6 +364,7 @@ const AdminDashboard = () => {
       setNewStudent({ nis: '', name: '', class: '', password: '' });
       setShowStudentForm(false);
       setEditingStudentId(null);
+      if (!editingStudentId && showOnboarding) handleOnboardingStepDone('students');
     }
   };
 
@@ -2774,6 +2786,7 @@ const AdminDashboard = () => {
         <Onboarding
           onNavigate={handleOnboardingNavigate}
           onComplete={handleOnboardingComplete}
+          stepDoneKey={onboardingStepDoneKey}
         />
       )}
     </motion.div>
