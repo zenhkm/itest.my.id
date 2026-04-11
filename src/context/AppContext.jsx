@@ -675,7 +675,7 @@ export const AppProvider = ({ children }) => {
     
     if (error) {
       console.error('Error adding exam:', error);
-      toast.error('Gagal menyimpan ujian ke database.', { id: loadingToast });
+      toast.error('Gagal menyimpan ujian: ' + (error.message || JSON.stringify(error)), { id: loadingToast });
     } else {
       setExams([examToInsert, ...exams]);
       toast.success('Ujian berhasil disimpan!', { id: loadingToast });
