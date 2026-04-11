@@ -1209,6 +1209,10 @@ export const AppProvider = ({ children }) => {
       // Hapus akun pengguna admin dari tabel users (staf juga terdaftar di sini)
       await supabase.from('users').delete().eq('admin_id', adminId);
 
+      // Hapus auth user dari Supabase Auth agar email bisa didaftarkan kembali & wajib verifikasi ulang
+      const { error: authDelErr } = await supabase.rpc('delete_current_user');
+      if (authDelErr) console.warn('Auth user deletion skipped:', authDelErr.message);
+
       toast.success('Seluruh data berhasil dimusnahkan. Sampai jumpa!', { id: loadingToast });
       await supabase.auth.signOut();
       logout();
