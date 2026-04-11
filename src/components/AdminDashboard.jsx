@@ -217,8 +217,10 @@ const AdminDashboard = () => {
           grade: String(row['Tingkat/Grade'] || row['grade'] || row['tingkat'] || ''),
           description: row['Keterangan'] || row['description'] || ''
         })).filter(c => c.class_name !== '');
-        if (formatted.length > 0) await importClasses(formatted);
-        else toast.error('Tidak ada data kelas valid ditemukan.');
+        if (formatted.length > 0) {
+          const ok = await importClasses(formatted);
+          if (ok && showOnboarding) handleOnboardingStepDone('classes-data');
+        } else toast.error('Tidak ada data kelas valid ditemukan.');
       } catch { toast.error('Terjadi kesalahan membaca file Excel.'); }
     };
     reader.readAsBinaryString(file);
@@ -417,7 +419,8 @@ const AdminDashboard = () => {
         }).filter(s => s.nis !== '' && s.name !== '');
 
         if (formattedStudents.length > 0) {
-          await importStudents(formattedStudents);
+          const ok = await importStudents(formattedStudents);
+          if (ok && showOnboarding) handleOnboardingStepDone('students');
         } else {
           toast.error('Tidak ada data siswa yang valid. Pastikan kolom NIS dan Nama terisi.');
         }
@@ -598,7 +601,8 @@ const AdminDashboard = () => {
         }).filter(q => q.text !== '');
 
         if (formattedQuestions.length > 0) {
-          await importQuestions(formattedQuestions);
+          const ok = await importQuestions(formattedQuestions);
+          if (ok && showOnboarding) handleOnboardingStepDone('question-bank');
         } else {
           toast.error('Tidak ada data pertanyaan yang valid ditemukan.');
         }
@@ -867,8 +871,10 @@ const AdminDashboard = () => {
           capacity: Number(row['Kapasitas'] || row['capacity'] || 30),
           status: row['Status'] || row['status'] || 'Tersedia'
         })).filter(r => r.room_code !== '' && r.room_name !== '');
-        if (formatted.length > 0) await importRooms(formatted);
-        else toast.error('Tidak ada data ruangan valid ditemukan.');
+        if (formatted.length > 0) {
+          const ok = await importRooms(formatted);
+          if (ok && showOnboarding) handleOnboardingStepDone('rooms-data');
+        } else toast.error('Tidak ada data ruangan valid ditemukan.');
       } catch { toast.error('Terjadi kesalahan membaca file Excel.'); }
     };
     reader.readAsBinaryString(file);
