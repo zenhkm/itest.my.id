@@ -68,7 +68,7 @@ const handleImageUpload = async (file) => {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { exams, addExam, deleteExam, logout, user, students, addStudent, updateStudent, deleteStudent, history, fetchHistory, updateProfile, staffList, addStaff, updateStaff, deleteStaff, questions, addQuestion, updateQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, updateRoom, deleteRoom, importRooms, groups, addGroup, updateGroup, deleteGroup, importGroups, importStaff } = useContext(AppContext);
+  const { exams, addExam, deleteExam, logout, user, students, addStudent, updateStudent, deleteStudent, history, fetchHistory, updateProfile, staffList, addStaff, updateStaff, deleteStaff, questions, addQuestion, updateQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, updateRoom, deleteRoom, importRooms, groups, addGroup, updateGroup, deleteGroup, importGroups, importStaff, classes, addClass, updateClass, deleteClass, importClasses } = useContext(AppContext);
   const [analyticsRefreshing, setAnalyticsRefreshing] = React.useState(false);
 
   const handleRefreshAnalytics = async () => {
@@ -100,6 +100,13 @@ const AdminDashboard = () => {
   const [newGroup, setNewGroup] = useState({ name: '', description: '', members: [] });
   const [editingGroupId, setEditingGroupId] = useState(null);
 
+  const [showClassForm, setShowClassForm] = useState(false);
+  const [newClass, setNewClass] = useState({ class_name: '', grade: '', description: '' });
+  const [editingClassId, setEditingClassId] = useState(null);
+
+  const [bankModalSubjectFilter, setBankModalSubjectFilter] = useState('all');
+  const [bankModalClassFilter, setBankModalClassFilter] = useState('all');
+
   const handleSaveGroup = async () => {
     if (!newGroup.name) {
       toast.error('Nama kelompok wajib diisi.');
@@ -116,6 +123,74 @@ const AdminDashboard = () => {
       setShowGroupForm(false);
       setEditingGroupId(null);
     }
+  };
+
+  const handleSaveClass = async () => {
+    if (!newClass.class_name) {
+      toast.error('Nama kelas wajib diisi.');
+      return;
+    }
+    let success = false;
+    if (editingClassId) {
+      success = await updateClass(editingClassId, newClass);
+    } else {
+      success = await addClass(newClass);
+    }
+    if (success) {
+      setNewClass({ class_name: '', grade: '', description: '' });
+      setShowClassForm(false);
+      setEditingClassId(null);
+    }
+  };
+
+  const downloadClassTemplate = () => {
+    const templateData = [
+      { 'Nama Kelas': '10 IPA 1', 'Tingkat/Grade': '10', 'Keterangan': 'Kelas IPA Unggulan' },
+      { 'Nama Kelas': '11 IPS 2', 'Tingkat/Grade': '11', 'Keterangan': '' }
+    ];
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template_Kelas');
+    ws['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 35 }];
+    XLSX.writeFile(wb, 'Template_Import_Kelas.xlsx');
+  };
+
+  const exportClassesToExcel = () => {
+    if (classes.length === 0) return toast.error('Belum ada data kelas untuk diekspor.');
+    const data = classes.map(c => ({
+      'Nama Kelas': c.class_name,
+      'Tingkat/Grade': c.grade || '',
+      'Keterangan': c.description || ''
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Data Kelas');
+    ws['!cols'] = [{ wch: 22 }, { wch: 15 }, { wch: 35 }];
+    XLSX.writeFile(wb, `Data_Kelas_${Date.now()}.xlsx`);
+    toast.success('Data kelas berhasil diekspor.');
+  };
+
+  const handleClassImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws);
+        if (data.length === 0) return toast.error('File Excel kosong atau tidak sesuai format.');
+        const formatted = data.map(row => ({
+          class_name: row['Nama Kelas'] || row['nama_kelas'] || row['kelas'] || '',
+          grade: String(row['Tingkat/Grade'] || row['grade'] || row['tingkat'] || ''),
+          description: row['Keterangan'] || row['description'] || ''
+        })).filter(c => c.class_name !== '');
+        if (formatted.length > 0) await importClasses(formatted);
+        else toast.error('Tidak ada data kelas valid ditemukan.');
+      } catch { toast.error('Terjadi kesalahan membaca file Excel.'); }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = null;
   };
 
   const [qBankSubjectFilter, setQBankSubjectFilter] = useState('all');
@@ -439,6 +514,8 @@ const AdminDashboard = () => {
 
     setShowBankModal(false);
     setSelectedBankQuestions([]);
+    setBankModalSubjectFilter('all');
+    setBankModalClassFilter('all');
     toast.success(`${clonedQuestions.length} soal berhasil disematkan dari bank.`);
   };
 
@@ -990,6 +1067,16 @@ const AdminDashboard = () => {
             >
               <MapPin size={20} />
               <span>Data Ruangan</span>
+            </button>
+          )}
+
+          {['admin', 'TU', 'guru'].includes(user?.role) && (
+            <button
+              className={`nav-item ${activeTab === 'classes-data' ? 'active' : ''}`}
+              onClick={() => handleTabClick('classes-data')}
+            >
+              <BookOpen size={20} />
+              <span>Data Kelas</span>
             </button>
           )}
 
@@ -2444,8 +2531,101 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Classes Data View */}
+        {activeTab === 'classes-data' && ['admin', 'TU', 'guru'].includes(user?.role) && (
+          <div className="school-data-view fade-in">
+            <div className="view-header flex-between" style={{ flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <h1>Data Kelas</h1>
+                <p>Kelola daftar kelas yang digunakan pada sistem ujian.</p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button className="btn-secondary-admin" onClick={downloadClassTemplate} style={{ borderColor: '#10b981', color: '#10b981', padding: '10px 14px' }}>
+                  <Download size={16} /><span className="hide-on-mobile">Template</span>
+                </button>
+                <label className="btn-secondary-admin" style={{ cursor: 'pointer', margin: 0, padding: '10px 14px', borderColor: '#3b82f6', color: '#3b82f6' }}>
+                  <UploadCloud size={16} /><span className="hide-on-mobile">Impor</span>
+                  <input type="file" accept=".xlsx,.xls" onChange={handleClassImport} style={{ display: 'none' }} />
+                </label>
+                <button className="btn-secondary-admin" onClick={exportClassesToExcel} style={{ borderColor: '#f59e0b', color: '#f59e0b', padding: '10px 14px' }}>
+                  <FileSpreadsheet size={16} /><span className="hide-on-mobile">Ekspor</span>
+                </button>
+                <button className="btn-primary-admin" onClick={() => { setNewClass({ class_name: '', grade: '', description: '' }); setEditingClassId(null); setShowClassForm(!showClassForm); }}>
+                  <Plus size={18} /><span>{showClassForm ? 'Batal' : 'Tambah Kelas'}</span>
+                </button>
+              </div>
+            </div>
+
+            {showClassForm && (
+              <div className="admin-recent-section glass-panel fade-in" style={{ marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 20px 0' }}>{editingClassId ? 'Edit Kelas' : 'Kelas Baru'}</h3>
+                <div className="form-grid">
+                  <div className="form-group-admin">
+                    <label>Nama Kelas</label>
+                    <input type="text" placeholder="Contoh: 10 IPA 1" value={newClass.class_name} onChange={e => setNewClass({ ...newClass, class_name: e.target.value })} />
+                  </div>
+                  <div className="form-group-admin">
+                    <label>Tingkat / Grade</label>
+                    <input type="text" placeholder="Contoh: 10, 11, 12" value={newClass.grade} onChange={e => setNewClass({ ...newClass, grade: e.target.value })} />
+                  </div>
+                  <div className="form-group-admin" style={{ gridColumn: '1 / -1' }}>
+                    <label>Keterangan (Opsional)</label>
+                    <input type="text" placeholder="Contoh: Kelas unggulan jurusan IPA" value={newClass.description} onChange={e => setNewClass({ ...newClass, description: e.target.value })} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                  {editingClassId && (
+                    <button className="btn-secondary-admin" onClick={() => { setEditingClassId(null); setNewClass({ class_name: '', grade: '', description: '' }); setShowClassForm(false); }}>Batal Edit</button>
+                  )}
+                  <button className="btn-primary-admin" onClick={handleSaveClass}>
+                    <Save size={16} /><span>{editingClassId ? 'Simpan Perubahan' : 'Simpan Kelas'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="admin-recent-section glass-panel">
+              <div className="table-responsive">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Nama Kelas</th>
+                      <th>Tingkat</th>
+                      <th>Keterangan</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {classes.length === 0 && (
+                      <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Belum ada data kelas. Tambah atau impor sekarang.</td></tr>
+                    )}
+                    {classes.map(c => (
+                      <tr key={c.id}>
+                        <td className="font-semibold">{c.class_name}</td>
+                        <td>{c.grade || '-'}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{c.description || '-'}</td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button className="action-btn" title="Edit" style={{ color: '#3b82f6' }} onClick={() => {
+                              setNewClass({ class_name: c.class_name, grade: c.grade || '', description: c.description || '' });
+                              setEditingClassId(c.id);
+                              setShowClassForm(true);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}><Edit size={15} /></button>
+                            <button className="action-btn" title="Hapus" onClick={() => deleteClass(c.id)}><Trash2 size={15} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Fallback dummy view */}
-        {activeTab !== 'dashboard' && activeTab !== 'add-exam' && activeTab !== 'exams' && activeTab !== 'analytics' && activeTab !== 'question-bank' && activeTab !== 'students' && activeTab !== 'settings' && activeTab !== 'staff' && activeTab !== 'school-data' && activeTab !== 'rooms-data' && (
+        {activeTab !== 'dashboard' && activeTab !== 'add-exam' && activeTab !== 'exams' && activeTab !== 'analytics' && activeTab !== 'question-bank' && activeTab !== 'students' && activeTab !== 'settings' && activeTab !== 'staff' && activeTab !== 'school-data' && activeTab !== 'rooms-data' && activeTab !== 'live-record' && activeTab !== 'groups-data' && activeTab !== 'classes-data' && (
           <div className="dummy-view fade-in glass-panel">
             <Activity size={48} className="dummy-icon" />
             <h2>Modul Sedang Dikembangkan</h2>
@@ -2458,18 +2638,74 @@ const AdminDashboard = () => {
       {showBankModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(0,0,0,0.7)', zIndex: 9999, backdropFilter: 'blur(5px)' }}>
           <div className="glass-panel" style={{ width: '90%', maxWidth: '800px', maxHeight: '80vh', overflowY: 'auto', padding: '24px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '1.4rem', color: 'var(--text-light)', margin: 0 }}>Ambil dari Bank Soal</h2>
-              <button className="btn-secondary-admin" onClick={() => { setShowBankModal(false); setSelectedBankQuestions([]); }} style={{ padding: '8px 16px' }}>Batal</button>
+              <button className="btn-secondary-admin" onClick={() => { setShowBankModal(false); setSelectedBankQuestions([]); setBankModalSubjectFilter('all'); setBankModalClassFilter('all'); }} style={{ padding: '8px 16px' }}>Batal</button>
             </div>
 
-            <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>Filter yang muncul hanya menyesuaikan nama mata pelajaran ujian yang sedang dirakit ({newExam.subject || 'Belum diisi'}).</p>
+            {/* Filter row */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
+              <select
+                value={bankModalSubjectFilter}
+                onChange={e => setBankModalSubjectFilter(e.target.value)}
+                style={{ flex: 1, minWidth: '150px', padding: '8px 12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', color: 'var(--text-light)', fontFamily: 'inherit' }}
+              >
+                <option value="all" style={{ color: 'black' }}>Semua Mata Pelajaran</option>
+                {[...new Set(questions.map(q => q.subject))].sort().map(sub => (
+                  <option key={sub} value={sub} style={{ color: 'black' }}>{sub}</option>
+                ))}
+              </select>
+              <select
+                value={bankModalClassFilter}
+                onChange={e => setBankModalClassFilter(e.target.value)}
+                style={{ flex: 1, minWidth: '150px', padding: '8px 12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', color: 'var(--text-light)', fontFamily: 'inherit' }}
+              >
+                <option value="all" style={{ color: 'black' }}>Semua Kelas</option>
+                {classes.map(c => (
+                  <option key={c.id} value={c.class_name} style={{ color: 'black' }}>{c.class_name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Select All / Deselect All bar */}
+            {(() => {
+              const bankFiltered = questions.filter(q =>
+                (bankModalSubjectFilter === 'all' || q.subject === bankModalSubjectFilter) &&
+                (bankModalClassFilter === 'all' || (q.class_name && q.class_name === bankModalClassFilter))
+              );
+              const allSelected = bankFiltered.length > 0 && bankFiltered.every(q => selectedBankQuestions.some(s => s.id === q.id));
+              return (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{bankFiltered.length} soal ditemukan</span>
+                  <button
+                    onClick={() => {
+                      if (allSelected) {
+                        setSelectedBankQuestions(prev => prev.filter(s => !bankFiltered.some(q => q.id === s.id)));
+                      } else {
+                        const toAdd = bankFiltered.filter(q => !selectedBankQuestions.some(s => s.id === q.id));
+                        setSelectedBankQuestions(prev => [...prev, ...toAdd]);
+                      }
+                    }}
+                    style={{ padding: '5px 14px', background: allSelected ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.06)', border: `1px solid ${allSelected ? '#8b5cf6' : 'rgba(255,255,255,0.2)'}`, color: allSelected ? '#8b5cf6' : 'var(--text-light)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <CheckSquare size={14} />
+                    {allSelected ? 'Batal Pilih Semua' : 'Pilih Semua'}
+                  </button>
+                </div>
+              );
+            })()}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto', flex: 1, marginBottom: '20px', paddingRight: '10px' }}>
-              {questions.filter(q => !newExam.subject || q.subject.toLowerCase().includes(newExam.subject.toLowerCase())).length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px' }}>Tidak ada soal yang selaras dengan mata pelajaran ini di dalam Bank Soal.</div>
+              {questions.filter(q =>
+                (bankModalSubjectFilter === 'all' || q.subject === bankModalSubjectFilter) &&
+                (bankModalClassFilter === 'all' || (q.class_name && q.class_name === bankModalClassFilter))
+              ).length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', color: 'var(--text-muted)' }}>Tidak ada soal yang sesuai filter.</div>
               ) : (
-                questions.filter(q => !newExam.subject || q.subject.toLowerCase().includes(newExam.subject.toLowerCase())).map(q => {
+                questions.filter(q =>
+                  (bankModalSubjectFilter === 'all' || q.subject === bankModalSubjectFilter) &&
+                  (bankModalClassFilter === 'all' || (q.class_name && q.class_name === bankModalClassFilter))
+                ).map(q => {
                   const isSelected = selectedBankQuestions.some(sel => sel.id === q.id);
                   return (
                     <div key={q.id} onClick={() => toggleBankQuestionSelection(q)} style={{ background: isSelected ? 'rgba(139, 92, 246, 0.15)' : 'rgba(0,0,0,0.2)', border: `1px solid ${isSelected ? '#8b5cf6' : 'rgba(255,255,255,0.1)'}`, padding: '16px', borderRadius: '12px', cursor: 'pointer', display: 'flex', gap: '16px', transition: 'all 0.2s' }}>
@@ -2479,13 +2715,17 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.75rem', padding: '2px 8px', background: 'rgba(59,130,246,0.2)', color: '#60a5fa', borderRadius: '6px' }}>{q.subject}</span>
+                          {q.class_name && <span style={{ fontSize: '0.75rem', padding: '2px 8px', background: 'rgba(16,185,129,0.2)', color: '#34d399', borderRadius: '6px' }}>{q.class_name}</span>}
+                        </div>
                         <p style={{ margin: '0 0 8px 0', fontSize: '0.95rem', fontWeight: '500', color: 'var(--text-light)' }}>{q.text}</p>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                           Opsi: {q.options.join(' | ')}
                         </div>
                       </div>
                     </div>
-                  )
+                  );
                 })
               )}
             </div>

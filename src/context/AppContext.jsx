@@ -22,6 +22,7 @@ export const AppProvider = ({ children }) => {
   const [schools, setSchools] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [user, setUser] = useState(loadUser);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -177,14 +178,14 @@ export const AppProvider = ({ children }) => {
     if (user && user.admin_id) {
       const initializeData = async () => {
         setIsFetching(true);
-        await Promise.all([fetchExams(user), fetchHistory(user), fetchStudents(user), fetchStaff(user), fetchQuestions(user), fetchSchools(user), fetchRooms(user), fetchGroups(user)]);
+        await Promise.all([fetchExams(user), fetchHistory(user), fetchStudents(user), fetchStaff(user), fetchQuestions(user), fetchSchools(user), fetchRooms(user), fetchGroups(user), fetchClasses(user)]);
         if (isMounted) {
           setIsFetching(false);
         }
       };
       initializeData();
     } else {
-      setExams([]); setHistory([]); setStudents([]); setStaffList([]); setQuestions([]); setSchools([]); setRooms([]); setGroups([]);
+      setExams([]); setHistory([]); setStudents([]); setStaffList([]); setQuestions([]); setSchools([]); setRooms([]); setGroups([]); setClasses([]);
       setIsFetching(false);
     }
 
@@ -371,8 +372,86 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const fetchRooms = async (currentUser = user) => {
+  // ── CLASSES ─────────────────────────────────────────────
+  const fetchClasses = async (currentUser = user) => {
     if (!currentUser || !currentUser.admin_id) return;
+    const { data, error } = await supabase
+      .from('classes')
+      .select('*')
+      .eq('admin_id', currentUser.admin_id)
+      .order('class_name', { ascending: true });
+    if (error) {
+      if (error.code !== '42P01') console.error('Error fetching classes:', error);
+    } else {
+      setClasses(data || []);
+    }
+  };
+
+  const addClass = async (newClass) => {
+    const toInsert = {
+      id: `cls_${Date.now()}`,
+      class_name: newClass.class_name,
+      grade: newClass.grade || '',
+      description: newClass.description || '',
+      admin_id: user.admin_id
+    };
+    const loadingToast = toast.loading('Menambahkan kelas...');
+    const { error } = await supabase.from('classes').insert([toInsert]);
+    if (error) {
+      if (error.code === '23505') toast.error('Nama kelas tersebut sudah terdaftar!', { id: loadingToast });
+      else toast.error('Gagal menambahkan kelas.', { id: loadingToast });
+      return false;
+    }
+    setClasses(prev => [...prev, toInsert].sort((a, b) => a.class_name.localeCompare(b.class_name)));
+    toast.success('Kelas berhasil ditambahkan!', { id: loadingToast });
+    return true;
+  };
+
+  const updateClass = async (id, updates) => {
+    const loadingToast = toast.loading('Memperbarui data kelas...');
+    const { error } = await supabase.from('classes').update(updates).eq('id', id);
+    if (error) {
+      toast.error('Gagal memperbarui kelas.', { id: loadingToast });
+      return false;
+    }
+    setClasses(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    toast.success('Kelas berhasil diperbarui!', { id: loadingToast });
+    return true;
+  };
+
+  const deleteClass = async (id) => {
+    if (await showConfirm('Hapus Kelas', 'Yakin ingin menghapus data kelas ini?')) {
+      const loadingToast = toast.loading('Menghapus kelas...');
+      const { error } = await supabase.from('classes').delete().eq('id', id);
+      if (error) {
+        toast.error('Gagal menghapus kelas.', { id: loadingToast });
+      } else {
+        setClasses(prev => prev.filter(c => c.id !== id));
+        toast.success('Kelas dihapus.', { id: loadingToast });
+      }
+    }
+  };
+
+  const importClasses = async (classesArray) => {
+    const toInsert = classesArray.map(c => ({
+      id: `cls_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+      class_name: c.class_name,
+      grade: c.grade || '',
+      description: c.description || '',
+      admin_id: user.admin_id
+    }));
+    const loadingToast = toast.loading('Mengimpor data kelas...');
+    const { error } = await supabase.from('classes').insert(toInsert);
+    if (error) {
+      toast.error('Gagal impor kelas: ' + error.message, { id: loadingToast });
+      return false;
+    }
+    setClasses(prev => [...prev, ...toInsert].sort((a, b) => a.class_name.localeCompare(b.class_name)));
+    toast.success(`${toInsert.length} kelas berhasil diimpor.`, { id: loadingToast });
+    return true;
+  };
+
+  const fetchRooms = async (currentUser = user) => {
     const { data, error } = await supabase
       .from('rooms')
       .select('*')
@@ -1197,6 +1276,7 @@ export const AppProvider = ({ children }) => {
       schools, addSchool, updateSchool, deleteSchool,
       rooms, addRoom, deleteRoom, updateRoom, importRooms,
       groups, addGroup, updateGroup, deleteGroup, fetchGroups, importGroups,
+      classes, addClass, updateClass, deleteClass, importClasses,
       isFetching
     }}>
       {children}
