@@ -14,6 +14,7 @@ import Help from './components/Help';
 import Feedback from './components/Feedback';
 import Register from './components/Register';
 import StudentProfile from './components/StudentProfile';
+import EmailConfirmation from './components/EmailConfirmation';
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useContext(AppContext);
   
@@ -48,6 +49,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/check-email" element={<EmailConfirmation />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/help" element={<Help />} />

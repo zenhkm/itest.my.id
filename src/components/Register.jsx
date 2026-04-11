@@ -40,7 +40,7 @@ const Register = () => {
     setIsSubmitting(false);
 
     if (success) {
-      // Don't navigate directly, wait for them to check email.
+      navigate('/check-email', { state: { email: formData.email } });
     }
   };
 

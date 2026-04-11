@@ -1216,11 +1216,11 @@ export const AppProvider = ({ children }) => {
         }
         return false;
       } else {
-        toast.success('Email Anda sudah terdaftar! Silakan lakukan aktivasi via tautan konfirmasi terbaru di kotak masuk/spam email Anda.', { id: loadingToast, duration: 8000 });
+        toast.dismiss(loadingToast);
         return true;
       }
     } else {
-      toast.success('Pendaftaran Sukses! Silakan cek kotak masuk atau folder spam Email Anda untuk memverifikasi akun.', { id: loadingToast, duration: 6000 });
+      toast.dismiss(loadingToast);
       return true;
     }
   };
