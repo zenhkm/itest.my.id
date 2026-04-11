@@ -1,0 +1,231 @@
+/* ── Onboarding Overlay ───────────────────────────────── */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(2, 6, 23, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.onboarding-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.98) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 520px;
+  padding: 40px 36px 32px;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Welcome screen */
+.onboarding-welcome {
+  text-align: center;
+}
+
+.onboarding-welcome .ob-greeting {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #818cf8;
+  margin-bottom: 8px;
+}
+
+.onboarding-welcome h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #f1f5f9;
+  margin: 0 0 12px;
+  line-height: 1.2;
+}
+
+.onboarding-welcome p {
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.65;
+  margin: 0 0 28px;
+}
+
+.ob-welcome-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  font-size: 32px;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+}
+
+/* Progress dots */
+.ob-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 32px;
+}
+
+.ob-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.ob-dot.active {
+  width: 24px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+.ob-dot.done {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+/* Step header */
+.ob-step-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ob-step-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.ob-step-meta {
+  flex: 1;
+}
+
+.ob-step-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6366f1;
+  margin-bottom: 4px;
+}
+
+.ob-step-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f1f5f9;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.ob-step-desc {
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.7;
+  margin: 0 0 28px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid rgba(99, 102, 241, 0.5);
+  border-radius: 0 8px 8px 0;
+}
+
+/* Footer */
+.ob-footer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-direction: column;
+}
+
+.ob-btn-primary {
+  width: 100%;
+  padding: 13px 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+}
+
+.ob-btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.ob-btn-secondary {
+  width: 100%;
+  padding: 11px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ob-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+/* Skip all link */
+.ob-skip-all {
+  font-size: 12px;
+  color: #475569;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  margin-top: 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s;
+}
+
+.ob-skip-all:hover {
+  color: #64748b;
+}
+
+@media (max-width: 480px) {
+  .onboarding-card {
+    padding: 28px 20px 24px;
+    border-radius: 20px;
+  }
+
+  .onboarding-welcome h1 {
+    font-size: 22px;
+  }
+
+  .ob-step-title {
+    font-size: 17px;
+  }
+}

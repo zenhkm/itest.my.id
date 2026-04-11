@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -42,6 +42,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '../supabaseClient';
 import './AdminDashboard.css';
 import LiveRecord from './LiveRecord';
+import Onboarding from './Onboarding';
 
 const handleImageUpload = async (file) => {
   if (file.size > 2097152) {
@@ -70,6 +71,29 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { exams, addExam, deleteExam, logout, user, students, addStudent, updateStudent, deleteStudent, history, fetchHistory, updateProfile, staffList, addStaff, updateStaff, deleteStaff, questions, addQuestion, updateQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, updateRoom, deleteRoom, importRooms, groups, addGroup, updateGroup, deleteGroup, importGroups, importStaff, classes, addClass, updateClass, deleteClass, importClasses } = useContext(AppContext);
   const [analyticsRefreshing, setAnalyticsRefreshing] = React.useState(false);
+
+  // ── Onboarding ───────────────────────────────────────
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (user?.admin_id) {
+      const done = localStorage.getItem(`onboarding_done_${user.admin_id}`);
+      if (!done) setShowOnboarding(true);
+    }
+  }, [user?.admin_id]);
+
+  const handleOnboardingComplete = () => {
+    if (user?.admin_id) {
+      localStorage.setItem(`onboarding_done_${user.admin_id}`, '1');
+    }
+    setShowOnboarding(false);
+  };
+
+  const handleOnboardingNavigate = (tab) => {
+    handleTabClick(tab);
+    handleOnboardingComplete();
+  };
+  // ─────────────────────────────────────────────────────
 
   const handleRefreshAnalytics = async () => {
     setAnalyticsRefreshing(true);
@@ -2743,6 +2767,14 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Onboarding wizard — shown on first login */}
+      {showOnboarding && (
+        <Onboarding
+          onNavigate={handleOnboardingNavigate}
+          onComplete={handleOnboardingComplete}
+        />
       )}
     </motion.div>
   );
