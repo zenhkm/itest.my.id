@@ -1268,7 +1268,8 @@ export const AppProvider = ({ children }) => {
         if (errMsg.includes('over the email rate limit')) {
           toast.error('Gagal: Permintaan telalu sering. Sistem keamanan Supabase menunda pengiriman (Rate Limit). Silakan tunggu sekitar sejam.', { id: loadingToast, duration: 8000 });
         } else if (errMsg.includes('already verified') || resendError.status === 422) {
-          toast.error('Gagal mengirim ulang. Akun ini sudah terverifikasi, silakan langsung Login.', { id: loadingToast, duration: 6000 });
+          toast.dismiss(loadingToast);
+          return 'already_verified';
         } else {
           toast.error(`Pendaftaran ulang gagal: ${resendError.message}`, { id: loadingToast });
         }

@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Lock, BookOpen, ArrowRight, Briefcase, Mail, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, BookOpen, ArrowRight, Briefcase, Mail, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -19,9 +19,11 @@ const Register = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [alreadyVerified, setAlreadyVerified] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setAlreadyVerified(false);
     if (!formData.email || !formData.name || !formData.password) {
       toast.error('Mohon isi semua bidang yang diperlukan.');
       return;
@@ -36,10 +38,14 @@ const Register = () => {
     }
 
     setIsSubmitting(true);
-    const success = await registerUser(formData);
+    const result = await registerUser(formData);
     setIsSubmitting(false);
 
-    if (success) {
+    if (result === 'already_verified') {
+      setAlreadyVerified(true);
+      return;
+    }
+    if (result) {
       navigate('/check-email', { state: { email: formData.email } });
     }
   };
@@ -149,6 +155,29 @@ const Register = () => {
               </button>
             </div>
           </div>
+
+          {alreadyVerified && (
+            <div style={{
+              marginTop: '16px',
+              padding: '14px 16px',
+              background: 'rgba(234, 179, 8, 0.12)',
+              border: '1px solid rgba(234, 179, 8, 0.45)',
+              borderRadius: '12px',
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'flex-start'
+            }}>
+              <AlertTriangle size={18} style={{ color: '#fbbf24', flexShrink: 0, marginTop: '1px' }} />
+              <div style={{ fontSize: '0.875rem', lineHeight: 1.6 }}>
+                <strong style={{ color: '#fbbf24', display: 'block', marginBottom: '4px' }}>Email sudah terdaftar &amp; terverifikasi</strong>
+                <span style={{ color: 'var(--text-muted)' }}>Akun dengan email </span>
+                <strong style={{ color: '#e2e8f0' }}>{formData.email}</strong>
+                <span style={{ color: 'var(--text-muted)' }}> sudah aktif. Silakan </span>
+                <Link to="/login" style={{ color: '#60a5fa', fontWeight: 600 }}>masuk ke halaman Login</Link>
+                <span style={{ color: 'var(--text-muted)' }}> atau gunakan email lain untuk mendaftar.</span>
+              </div>
+            </div>
+          )}
 
           <button type="submit" className="login-button" disabled={isSubmitting} style={{ marginTop: '24px' }}>
             {isSubmitting ? (
