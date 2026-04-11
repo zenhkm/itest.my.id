@@ -34,7 +34,8 @@ import {
   RefreshCw,
   Layers,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  AlertTriangle
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { motion } from 'framer-motion';
@@ -69,7 +70,7 @@ const handleImageUpload = async (file) => {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { exams, addExam, deleteExam, logout, user, students, addStudent, updateStudent, deleteStudent, history, fetchHistory, updateProfile, staffList, addStaff, updateStaff, deleteStaff, questions, addQuestion, updateQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, updateRoom, deleteRoom, importRooms, groups, addGroup, updateGroup, deleteGroup, importGroups, importStaff, classes, addClass, updateClass, deleteClass, importClasses } = useContext(AppContext);
+  const { exams, addExam, deleteExam, logout, user, students, addStudent, updateStudent, deleteStudent, history, fetchHistory, updateProfile, deleteAllAdminData, staffList, addStaff, updateStaff, deleteStaff, questions, addQuestion, updateQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, updateRoom, deleteRoom, importRooms, groups, addGroup, updateGroup, deleteGroup, importGroups, importStaff, classes, addClass, updateClass, deleteClass, importClasses } = useContext(AppContext);
   const [analyticsRefreshing, setAnalyticsRefreshing] = React.useState(false);
 
   // ── Onboarding ───────────────────────────────────────
@@ -2342,6 +2343,41 @@ const AdminDashboard = () => {
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="admin-recent-section glass-panel" style={{ maxWidth: '600px', marginTop: '24px', border: '1px solid rgba(239, 68, 68, 0.35)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                <AlertTriangle size={20} style={{ color: '#ef4444', flexShrink: 0 }} />
+                <h3 style={{ margin: 0, color: '#ef4444', fontSize: '1rem', fontWeight: 700 }}>Zona Berbahaya</h3>
+              </div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '20px', lineHeight: 1.6 }}>
+                Menghapus akun akan <strong style={{ color: '#f87171' }}>memusnahkan secara permanen</strong> seluruh data Anda — ujian, soal, siswa, kelas, ruangan, sekolah, riwayat, dan semua staf yang terdaftar di bawah akun ini. Tindakan ini tidak dapat dipulihkan.
+              </p>
+              <button
+                onClick={deleteAllAdminData}
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  background: 'transparent',
+                  color: '#ef4444',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  borderRadius: '12px',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.borderColor = '#ef4444'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'; }}
+              >
+                <Trash2 size={18} />
+                <span>Hapus Akun &amp; Semua Data Saya</span>
+              </button>
             </div>
           </div>
         )}

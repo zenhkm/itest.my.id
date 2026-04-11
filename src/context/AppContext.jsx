@@ -1167,6 +1167,59 @@ export const AppProvider = ({ children }) => {
     return false;
   };
 
+  const deleteAllAdminData = async () => {
+    if (!user || user.role !== 'admin') return false;
+
+    const { value: confirmed } = await Swal.fire({
+      title: 'Hapus Akun & Semua Data',
+      html: `
+        <p style="color:#f87171;margin-bottom:12px;">Tindakan ini <strong>tidak dapat dibatalkan</strong>. Seluruh data Anda — ujian, soal, siswa, ruangan, kelas, sekolah, riwayat, dan staf — akan dimusnahkan secara permanen.</p>
+        <p style="color:#cbd5e1;margin-bottom:8px;">Ketik <strong style="color:#f87171;">HAPUS</strong> untuk melanjutkan:</p>
+        <input id="swal-hapus-confirm" class="swal2-input" placeholder="Ketik HAPUS di sini" style="border-color:#ef4444;" />
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#3b82f6',
+      confirmButtonText: 'Hapus Segalanya',
+      cancelButtonText: 'Batal',
+      background: 'rgba(30, 41, 59, 1)',
+      color: '#fff',
+      preConfirm: () => {
+        const val = document.getElementById('swal-hapus-confirm')?.value || '';
+        if (val !== 'HAPUS') {
+          Swal.showValidationMessage('Ketik persis "HAPUS" (huruf kapital) untuk konfirmasi.');
+          return false;
+        }
+        return true;
+      }
+    });
+
+    if (!confirmed) return false;
+
+    const adminId = user.admin_id;
+    const loadingToast = toast.loading('Memusnahkan seluruh data dari server...');
+
+    try {
+      const tables = ['exam_sessions', 'history', 'exams', 'students', 'questions', 'groups', 'rooms', 'classes', 'schools'];
+      for (const table of tables) {
+        const { error } = await supabase.from(table).delete().eq('admin_id', adminId);
+        if (error) console.warn(`Peringatan saat menghapus tabel ${table}:`, error.message);
+      }
+      // Hapus akun pengguna admin dari tabel users (staf juga terdaftar di sini)
+      await supabase.from('users').delete().eq('admin_id', adminId);
+
+      toast.success('Seluruh data berhasil dimusnahkan. Sampai jumpa!', { id: loadingToast });
+      await supabase.auth.signOut();
+      logout();
+      return true;
+    } catch (err) {
+      console.error('deleteAllAdminData error:', err);
+      toast.error('Terjadi kesalahan saat menghapus data. Coba lagi.', { id: loadingToast });
+      return false;
+    }
+  };
+
   const registerUser = async (newUserData) => {
     const loadingToast = toast.loading('Memproses pendaftaran akun & sinkronisasi Email...');
     
@@ -1270,7 +1323,7 @@ export const AppProvider = ({ children }) => {
       students, addStudent, deleteStudent, importStudents, updateStudent,
       staffList, addStaff, deleteStaff, updateStaff, importStaff,
       questions, addQuestion, deleteQuestion, importQuestions, updateQuestion,
-      user, login, logout, handleCloudLogin, handleGoogleLogin, updateProfile, deleteProfile, registerUser,
+      user, login, logout, handleCloudLogin, handleGoogleLogin, updateProfile, deleteProfile, deleteAllAdminData, registerUser,
       uploadImageToSupabase,
       fetchLeaderboard,
       showConfirm,
