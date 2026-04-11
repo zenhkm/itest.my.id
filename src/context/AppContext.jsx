@@ -445,6 +445,28 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const importRooms = async (roomsArray) => {
+    const toInsert = roomsArray.map(r => ({
+      id: `rm_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+      room_code: String(r.room_code),
+      room_name: r.room_name,
+      capacity: Number(r.capacity) || 30,
+      status: r.status || 'Tersedia',
+      admin_id: user.admin_id
+    }));
+    const loadingToast = toast.loading('Mengimpor data ruangan...');
+    const { error } = await supabase.from('rooms').insert(toInsert);
+    if (error) {
+      console.error('Error importing rooms:', error);
+      toast.error('Gagal impor ruangan: ' + error.message, { id: loadingToast });
+      return false;
+    } else {
+      await fetchRooms();
+      toast.success(`${toInsert.length} ruangan berhasil diimpor.`, { id: loadingToast });
+      return true;
+    }
+  };
+
   // ── GROUPS ──────────────────────────────────────────────
   const fetchGroups = async (currentUser = user) => {
     if (!currentUser || !currentUser.admin_id) return;
@@ -504,6 +526,28 @@ export const AppProvider = ({ children }) => {
         setGroups(prev => prev.filter(g => g.id !== id));
         toast.success('Kelompok dihapus.', { id: loadingToast });
       }
+    }
+  };
+
+  const importGroups = async (groupsArray) => {
+    const toInsert = groupsArray.map(g => ({
+      id: `grp_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+      name: g.name,
+      description: g.description || '',
+      members: Array.isArray(g.members) ? g.members
+        : (g.members ? String(g.members).split(',').map(s => s.trim()).filter(Boolean) : []),
+      admin_id: user.admin_id
+    }));
+    const loadingToast = toast.loading('Mengimpor data kelompok...');
+    const { error } = await supabase.from('groups').insert(toInsert);
+    if (error) {
+      console.error('Error importing groups:', error);
+      toast.error('Gagal impor kelompok: ' + error.message, { id: loadingToast });
+      return false;
+    } else {
+      setGroups(prev => [...toInsert, ...prev]);
+      toast.success(`${toInsert.length} kelompok berhasil diimpor.`, { id: loadingToast });
+      return true;
     }
   };
 
@@ -789,6 +833,29 @@ export const AppProvider = ({ children }) => {
     } else {
       setStaffList((prev) => prev.map(s => s.id === id ? { ...s, ...updates } : s));
       toast.success('Pembaruan data staf sukses!', { id: loadingToast });
+      return true;
+    }
+  };
+
+  const importStaff = async (staffArray) => {
+    const toInsert = staffArray.map(s => ({
+      id: `usr_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+      username: String(s.username).toLowerCase(),
+      name: s.name,
+      role: s.role || 'guru',
+      password: s.password || '123456',
+      status: 'Aktif',
+      admin_id: user.admin_id
+    }));
+    const loadingToast = toast.loading('Mengimpor data pegawai...');
+    const { error } = await supabase.from('users').insert(toInsert);
+    if (error) {
+      console.error('Error importing staff:', error);
+      toast.error('Gagal impor pegawai: ' + error.message, { id: loadingToast });
+      return false;
+    } else {
+      setStaffList(prev => [...toInsert, ...prev]);
+      toast.success(`${toInsert.length} pegawai berhasil diimpor.`, { id: loadingToast });
       return true;
     }
   };
@@ -1121,15 +1188,15 @@ export const AppProvider = ({ children }) => {
       history, saveResult, fetchHistory,
       fetchExamSession, upsertExamSession, deleteExamSession,
       students, addStudent, deleteStudent, importStudents, updateStudent,
-      staffList, addStaff, deleteStaff, updateStaff,
+      staffList, addStaff, deleteStaff, updateStaff, importStaff,
       questions, addQuestion, deleteQuestion, importQuestions, updateQuestion,
       user, login, logout, handleCloudLogin, handleGoogleLogin, updateProfile, deleteProfile, registerUser,
       uploadImageToSupabase,
       fetchLeaderboard,
       showConfirm,
       schools, addSchool, updateSchool, deleteSchool,
-      rooms, addRoom, deleteRoom, updateRoom,
-      groups, addGroup, updateGroup, deleteGroup, fetchGroups,
+      rooms, addRoom, deleteRoom, updateRoom, importRooms,
+      groups, addGroup, updateGroup, deleteGroup, fetchGroups, importGroups,
       isFetching
     }}>
       {children}

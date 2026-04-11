@@ -68,7 +68,7 @@ const handleImageUpload = async (file) => {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { exams, addExam, deleteExam, logout, user, students, addStudent, deleteStudent, history, fetchHistory, updateProfile, staffList, addStaff, deleteStaff, questions, addQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, deleteRoom, groups, addGroup, updateGroup, deleteGroup } = useContext(AppContext);
+  const { exams, addExam, deleteExam, logout, user, students, addStudent, updateStudent, deleteStudent, history, fetchHistory, updateProfile, staffList, addStaff, updateStaff, deleteStaff, questions, addQuestion, updateQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, updateRoom, deleteRoom, importRooms, groups, addGroup, updateGroup, deleteGroup, importGroups, importStaff } = useContext(AppContext);
   const [analyticsRefreshing, setAnalyticsRefreshing] = React.useState(false);
 
   const handleRefreshAnalytics = async () => {
@@ -614,6 +614,206 @@ const AdminDashboard = () => {
 
     doc.save(`Laporan_Nilai_${Date.now()}.pdf`);
     toast.success('File PDF berhasil diunduh');
+  };
+
+  // ── Export per-ujian ──────────────────────────────────────
+  const exportExamToExcel = (eg) => {
+    const formattedData = eg.records.map(r => ({
+      'Nama Siswa': r.studentName || 'Anonim',
+      'Nilai': r.score,
+      'Benar': r.correctAnswers,
+      'Total Soal': r.totalQuestions,
+      'Status': r.status || (r.score >= 70 ? 'Lulus' : 'Tidak Lulus'),
+      'Tanggal': new Date(r.date).toLocaleString('id-ID')
+    }));
+    const ws = XLSX.utils.json_to_sheet(formattedData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Hasil Ujian');
+    ws['!cols'] = [{ wch: 35 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 15 }, { wch: 25 }];
+    XLSX.writeFile(wb, `Hasil_${eg.examTitle.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`);
+    toast.success('File Excel ujian berhasil diunduh');
+  };
+
+  const exportExamToPDF = (eg) => {
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text(`Laporan Ujian: ${eg.examTitle}`, 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Mata Pelajaran: ${eg.subject}  |  Peserta: ${eg.total}  |  Rata-rata: ${eg.avg}`, 14, 23);
+    autoTable(doc, {
+      head: [['Nama Siswa', 'Nilai', 'Benar/Soal', 'Status', 'Tanggal']],
+      body: eg.records.map(r => [
+        r.studentName || 'Anonim',
+        r.score,
+        `${r.correctAnswers}/${r.totalQuestions}`,
+        r.status || (r.score >= 70 ? 'Lulus' : 'Tidak Lulus'),
+        new Date(r.date).toLocaleDateString('id-ID')
+      ]),
+      startY: 28,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [14, 165, 233] },
+    });
+    doc.save(`Hasil_${eg.examTitle.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+    toast.success('File PDF ujian berhasil diunduh');
+  };
+
+  // ── Kelompok Import/Export ────────────────────────────────
+  const downloadGroupTemplate = () => {
+    const templateData = [
+      { 'Nama Kelompok': 'Kelompok A', 'Keterangan': 'Kelas X IPA 1', 'Anggota (NIS pisah koma)': '10101,10102,10103' },
+      { 'Nama Kelompok': 'Kelompok B', 'Keterangan': 'Kelas X IPA 2', 'Anggota (NIS pisah koma)': '10104,10105' }
+    ];
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template_Kelompok');
+    ws['!cols'] = [{ wch: 20 }, { wch: 30 }, { wch: 40 }];
+    XLSX.writeFile(wb, 'Template_Import_Kelompok.xlsx');
+  };
+
+  const exportGroupsToExcel = () => {
+    if (groups.length === 0) return toast.error('Belum ada data kelompok untuk diekspor.');
+    const data = groups.map(g => ({
+      'Nama Kelompok': g.name,
+      'Keterangan': g.description || '',
+      'Jumlah Anggota': Array.isArray(g.members) ? g.members.length : 0,
+      'Anggota (NIS pisah koma)': Array.isArray(g.members) ? g.members.join(',') : ''
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Data Kelompok');
+    ws['!cols'] = [{ wch: 25 }, { wch: 35 }, { wch: 15 }, { wch: 50 }];
+    XLSX.writeFile(wb, `Data_Kelompok_${Date.now()}.xlsx`);
+    toast.success('Data kelompok berhasil diekspor.');
+  };
+
+  const handleGroupImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws);
+        if (data.length === 0) return toast.error('File Excel kosong atau tidak sesuai format.');
+        const formatted = data.map(row => ({
+          name: row['Nama Kelompok'] || row['nama'] || '',
+          description: row['Keterangan'] || row['deskripsi'] || '',
+          members: row['Anggota (NIS pisah koma)'] || row['members'] || ''
+        })).filter(g => g.name !== '');
+        if (formatted.length > 0) await importGroups(formatted);
+        else toast.error('Tidak ada data kelompok valid ditemukan.');
+      } catch { toast.error('Terjadi kesalahan membaca file Excel.'); }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = null;
+  };
+
+  // ── Ruangan Import/Export ─────────────────────────────────
+  const downloadRoomTemplate = () => {
+    const templateData = [
+      { 'Kode Ruangan': 'LAB-01', 'Nama Ruangan': 'Laboratorium Komputer 1', 'Kapasitas': 30, 'Status': 'Tersedia' },
+      { 'Kode Ruangan': 'R-101', 'Nama Ruangan': 'Ruang Kelas 101', 'Kapasitas': 35, 'Status': 'Tersedia' }
+    ];
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template_Ruangan');
+    ws['!cols'] = [{ wch: 18 }, { wch: 35 }, { wch: 12 }, { wch: 15 }];
+    XLSX.writeFile(wb, 'Template_Import_Ruangan.xlsx');
+  };
+
+  const exportRoomsToExcel = () => {
+    if (rooms.length === 0) return toast.error('Belum ada data ruangan untuk diekspor.');
+    const data = rooms.map(r => ({
+      'Kode Ruangan': r.room_code,
+      'Nama Ruangan': r.room_name,
+      'Kapasitas': r.capacity,
+      'Status': r.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Data Ruangan');
+    ws['!cols'] = [{ wch: 18 }, { wch: 35 }, { wch: 12 }, { wch: 15 }];
+    XLSX.writeFile(wb, `Data_Ruangan_${Date.now()}.xlsx`);
+    toast.success('Data ruangan berhasil diekspor.');
+  };
+
+  const handleRoomImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws);
+        if (data.length === 0) return toast.error('File Excel kosong atau tidak sesuai format.');
+        const formatted = data.map(row => ({
+          room_code: String(row['Kode Ruangan'] || row['kode'] || ''),
+          room_name: row['Nama Ruangan'] || row['nama'] || '',
+          capacity: Number(row['Kapasitas'] || row['capacity'] || 30),
+          status: row['Status'] || row['status'] || 'Tersedia'
+        })).filter(r => r.room_code !== '' && r.room_name !== '');
+        if (formatted.length > 0) await importRooms(formatted);
+        else toast.error('Tidak ada data ruangan valid ditemukan.');
+      } catch { toast.error('Terjadi kesalahan membaca file Excel.'); }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = null;
+  };
+
+  // ── Pegawai Import/Export ─────────────────────────────────
+  const downloadStaffTemplate = () => {
+    const templateData = [
+      { 'Username Login': 'guru.budi', 'Nama Tampilan': 'Budi Santoso, S.Pd', 'Peran': 'guru', 'Kata Sandi Awal': 'sandi123' },
+      { 'Username Login': 'tu.ani', 'Nama Tampilan': 'Ani Rahayu', 'Peran': 'TU', 'Kata Sandi Awal': 'sandi123' }
+    ];
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template_Pegawai');
+    ws['!cols'] = [{ wch: 20 }, { wch: 35 }, { wch: 15 }, { wch: 20 }];
+    XLSX.writeFile(wb, 'Template_Import_Pegawai.xlsx');
+  };
+
+  const exportStaffToExcel = () => {
+    if (staffList.length === 0) return toast.error('Belum ada data pegawai untuk diekspor.');
+    const data = staffList.map(s => ({
+      'Username Login': s.username,
+      'Nama Tampilan': s.name,
+      'Peran': s.role,
+      'Status': s.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Data Pegawai');
+    ws['!cols'] = [{ wch: 22 }, { wch: 35 }, { wch: 15 }, { wch: 12 }];
+    XLSX.writeFile(wb, `Data_Pegawai_${Date.now()}.xlsx`);
+    toast.success('Data pegawai berhasil diekspor.');
+  };
+
+  const handleStaffImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws);
+        if (data.length === 0) return toast.error('File Excel kosong atau tidak sesuai format.');
+        const validRoles = ['admin', 'guru', 'pengawas', 'TU'];
+        const formatted = data.map(row => ({
+          username: String(row['Username Login'] || row['username'] || '').toLowerCase(),
+          name: row['Nama Tampilan'] || row['nama'] || '',
+          role: validRoles.includes(row['Peran'] || row['role']) ? (row['Peran'] || row['role']) : 'guru',
+          password: String(row['Kata Sandi Awal'] || row['password'] || '123456')
+        })).filter(s => s.username !== '' && s.name !== '');
+        if (formatted.length > 0) await importStaff(formatted);
+        else toast.error('Tidak ada data pegawai valid ditemukan.');
+      } catch { toast.error('Terjadi kesalahan membaca file Excel.'); }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = null;
   };
 
   const analyticsData = getAnalyticsData();
@@ -1282,6 +1482,7 @@ const AdminDashboard = () => {
                       <th>Rata-rata</th>
                       <th>Tertinggi / Terendah</th>
                       <th>Lulus</th>
+                      <th>Export</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -1307,6 +1508,16 @@ const AdminDashboard = () => {
                             <span style={{ color: '#10b981' }}>{eg.max}</span> / <span style={{ color: '#ef4444' }}>{eg.min}</span>
                           </td>
                           <td>{eg.passed} / {eg.total}</td>
+                          <td onClick={e => e.stopPropagation()}>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button title="Export Excel ujian ini" onClick={() => exportExamToExcel(eg)} style={{ padding: '4px 8px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.4)', color: '#10b981', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.78rem' }}>
+                                <FileSpreadsheet size={13} /> XLS
+                              </button>
+                              <button title="Export PDF ujian ini" onClick={() => exportExamToPDF(eg)} style={{ padding: '4px 8px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', color: '#ef4444', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.78rem' }}>
+                                <FileText size={13} /> PDF
+                              </button>
+                            </div>
+                          </td>
                           <td style={{ textAlign: 'center' }}>
                             {expandedAnalyticsExamId === eg.examId ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                           </td>
@@ -1330,6 +1541,7 @@ const AdminDashboard = () => {
                                 {h.status || (h.score >= 70 ? 'Lulus' : 'Gagal')}
                               </div>
                             </td>
+                            <td></td>
                             <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                               {new Date(h.date).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </td>
@@ -1363,9 +1575,21 @@ const AdminDashboard = () => {
                 <h1>Data Kelompok</h1>
                 <p>Kelola kelompok peserta ujian untuk pengkoordiniran yang lebih mudah.</p>
               </div>
-              <button className="btn-primary-admin" onClick={() => { setNewGroup({ name: '', description: '', members: [] }); setEditingGroupId(null); setShowGroupForm(true); }}>
-                <Plus size={18} /><span>Buat Kelompok</span>
-              </button>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button className="btn-secondary-admin" onClick={downloadGroupTemplate} style={{ borderColor: '#10b981', color: '#10b981', padding: '10px 14px' }}>
+                  <Download size={16} /><span className="hide-on-mobile">Template</span>
+                </button>
+                <label className="btn-secondary-admin" style={{ cursor: 'pointer', margin: 0, padding: '10px 14px', borderColor: '#3b82f6', color: '#3b82f6' }}>
+                  <UploadCloud size={16} /><span className="hide-on-mobile">Impor</span>
+                  <input type="file" accept=".xlsx,.xls" onChange={handleGroupImport} style={{ display: 'none' }} />
+                </label>
+                <button className="btn-secondary-admin" onClick={exportGroupsToExcel} style={{ borderColor: '#f59e0b', color: '#f59e0b', padding: '10px 14px' }}>
+                  <FileSpreadsheet size={16} /><span className="hide-on-mobile">Ekspor</span>
+                </button>
+                <button className="btn-primary-admin" onClick={() => { setNewGroup({ name: '', description: '', members: [] }); setEditingGroupId(null); setShowGroupForm(true); }}>
+                  <Plus size={18} /><span>Buat Kelompok</span>
+                </button>
+              </div>
             </div>
 
             {showGroupForm && (
@@ -1837,14 +2061,26 @@ const AdminDashboard = () => {
                 <h1>Manajemen Pegawai Internal</h1>
                 <p>Kelola data guru, tata usaha, dan pengawas sekolah (Staf).</p>
               </div>
-              <button className="btn-primary-admin" onClick={() => {
-                setEditingStaffId(null);
-                setNewStaff({ username: '', name: '', role: 'guru', password: '' });
-                setShowStaffForm(!showStaffForm);
-              }}>
-                <Plus size={18} />
-                <span>{showStaffForm ? 'Batal Tambah' : 'Rekrut Pegawai Baru'}</span>
-              </button>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button className="btn-secondary-admin" onClick={downloadStaffTemplate} style={{ borderColor: '#10b981', color: '#10b981', padding: '10px 14px' }}>
+                  <Download size={16} /><span className="hide-on-mobile">Template</span>
+                </button>
+                <label className="btn-secondary-admin" style={{ cursor: 'pointer', margin: 0, padding: '10px 14px', borderColor: '#3b82f6', color: '#3b82f6' }}>
+                  <UploadCloud size={16} /><span className="hide-on-mobile">Impor</span>
+                  <input type="file" accept=".xlsx,.xls" onChange={handleStaffImport} style={{ display: 'none' }} />
+                </label>
+                <button className="btn-secondary-admin" onClick={exportStaffToExcel} style={{ borderColor: '#f59e0b', color: '#f59e0b', padding: '10px 14px' }}>
+                  <FileSpreadsheet size={16} /><span className="hide-on-mobile">Ekspor</span>
+                </button>
+                <button className="btn-primary-admin" onClick={() => {
+                  setEditingStaffId(null);
+                  setNewStaff({ username: '', name: '', role: 'guru', password: '' });
+                  setShowStaffForm(!showStaffForm);
+                }}>
+                  <Plus size={18} />
+                  <span>{showStaffForm ? 'Batal Tambah' : 'Rekrut Pegawai Baru'}</span>
+                </button>
+              </div>
             </div>
 
             {showStaffForm && (
@@ -2099,13 +2335,25 @@ const AdminDashboard = () => {
                 <h1>Manajemen Ruang Ujian</h1>
                 <p>Kelola kapasitas dan ketersediaan lokasi fisik pelaksanaan ujian.</p>
               </div>
-              <button className="btn-primary-admin" onClick={() => {
-                setEditingRoomId(null);
-                setNewRoom({ room_code: '', room_name: '', capacity: 30, status: 'Tersedia' });
-                setShowRoomForm(!showRoomForm);
-              }}>
-                {showRoomForm ? 'Tutup Formulir' : 'Tambah Ruangan'}
-              </button>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button className="btn-secondary-admin" onClick={downloadRoomTemplate} style={{ borderColor: '#10b981', color: '#10b981', padding: '10px 14px' }}>
+                  <Download size={16} /><span className="hide-on-mobile">Template</span>
+                </button>
+                <label className="btn-secondary-admin" style={{ cursor: 'pointer', margin: 0, padding: '10px 14px', borderColor: '#3b82f6', color: '#3b82f6' }}>
+                  <UploadCloud size={16} /><span className="hide-on-mobile">Impor</span>
+                  <input type="file" accept=".xlsx,.xls" onChange={handleRoomImport} style={{ display: 'none' }} />
+                </label>
+                <button className="btn-secondary-admin" onClick={exportRoomsToExcel} style={{ borderColor: '#f59e0b', color: '#f59e0b', padding: '10px 14px' }}>
+                  <FileSpreadsheet size={16} /><span className="hide-on-mobile">Ekspor</span>
+                </button>
+                <button className="btn-primary-admin" onClick={() => {
+                  setEditingRoomId(null);
+                  setNewRoom({ room_code: '', room_name: '', capacity: 30, status: 'Tersedia' });
+                  setShowRoomForm(!showRoomForm);
+                }}>
+                  {showRoomForm ? 'Tutup Formulir' : 'Tambah Ruangan'}
+                </button>
+              </div>
             </div>
 
             {showRoomForm && (
