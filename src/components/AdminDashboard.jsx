@@ -136,6 +136,7 @@ const AdminDashboard = () => {
   const [showClassForm, setShowClassForm] = useState(false);
   const [newClass, setNewClass] = useState({ class_name: '', grade: '', description: '' });
   const [editingClassId, setEditingClassId] = useState(null);
+  const [studentSelectedClass, setStudentSelectedClass] = useState(null);
 
   const [bankModalSubjectFilter, setBankModalSubjectFilter] = useState('all');
   const [bankModalClassFilter, setBankModalClassFilter] = useState('all');
@@ -377,10 +378,13 @@ const AdminDashboard = () => {
     }
 
     if (success) {
+      const savedClass = newStudent.class;
       setNewStudent({ nis: '', name: '', class: '', password: '' });
       setManualClassMode(false);
       setShowStudentForm(false);
       setEditingStudentId(null);
+      // If we were on the class cards view (no class selected), jump into the saved class
+      if (!studentSelectedClass && savedClass) setStudentSelectedClass(savedClass);
       if (!editingStudentId && showOnboarding) handleOnboardingStepDone('students');
     }
   };
@@ -2177,12 +2181,25 @@ const AdminDashboard = () => {
         {/* Students Management View */}
         {activeTab === 'students' && ['admin', 'guru', 'TU'].includes(user?.role) && (
           <div className="dashboard-view fade-in">
+            {/* Header */}
             <div className="view-header flex-between" style={{ flexWrap: 'wrap', gap: '16px' }}>
               <div>
-                <h1>Manajemen Siswa</h1>
-                <p>Kelola data siswa yang terdaftar di dalam sistem ujian.</p>
+                {studentSelectedClass ? (
+                  <>
+                    <button className="back-btn" onClick={() => { setStudentSelectedClass(null); setShowStudentForm(false); setEditingStudentId(null); }} style={{ marginBottom: '6px' }}>
+                      <ArrowLeft size={16} /> Kembali ke Daftar Kelas
+                    </button>
+                    <h1>{studentSelectedClass}</h1>
+                    <p>{students.filter(s => s.class === studentSelectedClass).length} siswa terdaftar</p>
+                  </>
+                ) : (
+                  <>
+                    <h1>Manajemen Siswa</h1>
+                    <p>Pilih kelas untuk mengelola data siswanya.</p>
+                  </>
+                )}
               </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <button className="btn-secondary-admin" onClick={downloadStudentExcelTemplate} style={{ borderColor: '#10b981', color: '#10b981', padding: '10px 16px' }} title="Unduh Template Excel">
                   <Download size={18} />
                   <span className="hide-on-mobile">Unduh Template</span>
@@ -2194,15 +2211,17 @@ const AdminDashboard = () => {
                 </label>
                 <button className="btn-primary-admin" onClick={() => {
                   setEditingStudentId(null);
-                  setNewStudent({ nis: '', name: '', class: '', password: '' });
+                  setNewStudent({ nis: '', name: '', class: studentSelectedClass || '', password: '' });
+                  setManualClassMode(false);
                   setShowStudentForm(!showStudentForm);
                 }}>
                   <Plus size={18} />
-                  <span className="hide-on-mobile">{showStudentForm ? 'Batal' : 'Tambah Baru'}</span>
+                  <span className="hide-on-mobile">{showStudentForm ? 'Batal' : 'Tambah Siswa'}</span>
                 </button>
               </div>
             </div>
 
+            {/* Add/Edit Form */}
             {showStudentForm && (
               <div className="admin-recent-section glass-panel" style={{ marginBottom: '24px' }}>
                 <div className="section-header flex-between">
@@ -2270,50 +2289,95 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            <div className="admin-recent-section glass-panel">
-              <div className="table-responsive">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>NIS</th>
-                      <th>Nama Lengkap</th>
-                      <th>Kelas</th>
-                      <th>Status Akun</th>
-                      <th>Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredStudents.map(std => (
-                      <tr key={std.id}>
-                        <td className="font-semibold">{std.nis}</td>
-                        <td>{std.name}</td>
-                        <td>{std.class}</td>
-                        <td><span className={`badge badge-${std.status === 'Aktif' ? 'active' : 'draft'}`}>{std.status}</span></td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button className="action-btn" title="Edit" style={{ color: '#3b82f6' }} onClick={() => {
-                              setEditingStudentId(std.id);
-                              setNewStudent({ nis: std.nis, name: std.name, class: std.class, password: '' });
-                              setManualClassMode(false);
-                              setShowStudentForm(true);
-                              window.scrollTo({ top: 300, behavior: 'smooth' });
-                            }}>
-                              <Edit size={16} />
-                            </button>
-                            <button className="action-btn" title="Hapus" onClick={() => deleteStudent(std.id)}><Trash2 size={16} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredStudents.length === 0 && (
+            {/* CLASS CARDS — shown when no class selected */}
+            {!studentSelectedClass && (() => {
+              const classGroups = students.reduce((acc, s) => {
+                const key = s.class || '(Tanpa Kelas)';
+                if (!acc[key]) acc[key] = 0;
+                acc[key]++;
+                return acc;
+              }, {});
+              // Also include classes that have 0 students
+              classes.forEach(c => {
+                if (!classGroups[c.class_name]) classGroups[c.class_name] = 0;
+              });
+              const classList = Object.entries(classGroups).sort((a, b) => a[0].localeCompare(b[0]));
+              const colors = ['#0ea5e9','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4','#84cc16'];
+              return classList.length === 0 ? (
+                <div className="admin-recent-section glass-panel" style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
+                  <Users size={40} style={{ opacity: 0.3, marginBottom: '12px' }} />
+                  <p>Belum ada siswa atau kelas terdaftar.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+                  {classList.map(([className, count], idx) => {
+                    const color = colors[idx % colors.length];
+                    return (
+                      <div
+                        key={className}
+                        onClick={() => { setStudentSelectedClass(className); setShowStudentForm(false); }}
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: `4px solid ${color}`, borderRadius: '14px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '10px' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-light)', lineHeight: 1.3 }}>{className}</span>
+                          <Users size={18} style={{ color, opacity: 0.7, flexShrink: 0, marginLeft: '8px' }} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                          <span style={{ fontSize: '2rem', fontWeight: 800, color }}>{count}</span>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>siswa</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
+            {/* STUDENTS TABLE — shown when a class is selected */}
+            {studentSelectedClass && (
+              <div className="admin-recent-section glass-panel">
+                <div className="table-responsive">
+                  <table className="admin-table">
+                    <thead>
                       <tr>
-                        <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Belum ada siswa yang didaftarkan.</td>
+                        <th>NIS</th>
+                        <th>Nama Lengkap</th>
+                        <th>Status Akun</th>
+                        <th>Aksi</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {students.filter(s => s.class === studentSelectedClass).map(std => (
+                        <tr key={std.id}>
+                          <td className="font-semibold">{std.nis}</td>
+                          <td>{std.name}</td>
+                          <td><span className={`badge badge-${std.status === 'Aktif' ? 'active' : 'draft'}`}>{std.status}</span></td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button className="action-btn" title="Edit" style={{ color: '#3b82f6' }} onClick={() => {
+                                setEditingStudentId(std.id);
+                                setNewStudent({ nis: std.nis, name: std.name, class: std.class, password: '' });
+                                setManualClassMode(false);
+                                setShowStudentForm(true);
+                                window.scrollTo({ top: 300, behavior: 'smooth' });
+                              }}>
+                                <Edit size={16} />
+                              </button>
+                              <button className="action-btn" title="Hapus" onClick={() => deleteStudent(std.id)}><Trash2 size={16} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {students.filter(s => s.class === studentSelectedClass).length === 0 && (
+                        <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Belum ada siswa di kelas ini.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 

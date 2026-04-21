@@ -410,12 +410,19 @@ export const AppProvider = ({ children }) => {
 
   const updateClass = async (id, updates) => {
     const loadingToast = toast.loading('Memperbarui data kelas...');
+    // Find old class name before updating
+    const oldClass = classes.find(c => c.id === id);
     const { error } = await supabase.from('classes').update(updates).eq('id', id);
     if (error) {
       toast.error('Gagal memperbarui kelas.', { id: loadingToast });
       return false;
     }
     setClasses(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    // Cascade: update all students that had the old class name
+    if (updates.class_name && oldClass && oldClass.class_name !== updates.class_name) {
+      await supabase.from('students').update({ class: updates.class_name }).eq('class', oldClass.class_name).eq('admin_id', user.admin_id);
+      setStudents(prev => prev.map(s => s.class === oldClass.class_name ? { ...s, class: updates.class_name } : s));
+    }
     toast.success('Kelas berhasil diperbarui!', { id: loadingToast });
     return true;
   };
