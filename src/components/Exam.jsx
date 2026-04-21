@@ -40,7 +40,10 @@ const Exam = () => {
           setFlagged(session.flagged || {});
           setTimeLeft(session.time_left);
           setCurrentIdx(session.current_idx || 0);
-          toast.success('Melanjutkan sesi ujian sebelumnya...', { icon: '🔄', duration: 4000 });
+          // Resuming = student left the exam page; count as a violation
+          const nextViolation = violationsRef.current + 1;
+          toast.error(`Melanjutkan sesi ujian sebelumnya terdeteksi! Anda pernah meninggalkan halaman ujian. Peringatan ${nextViolation}/${VIOLATION_LIMIT}`, { icon: '⚠️', duration: 5000 });
+          setViolations(prev => prev + 1);
         } else {
           // Initialize fresh
           let questionsCopy = Array.isArray(examData.questions) ? [...examData.questions] : [];
