@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+﻿import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -73,7 +73,7 @@ const AdminDashboard = () => {
   const { exams, addExam, deleteExam, logout, user, students, addStudent, updateStudent, deleteStudent, history, fetchHistory, updateProfile, deleteAllAdminData, staffList, addStaff, updateStaff, deleteStaff, questions, addQuestion, updateQuestion, deleteQuestion, importQuestions, importStudents, schools, addSchool, updateSchool, deleteSchool, rooms, addRoom, updateRoom, deleteRoom, importRooms, groups, addGroup, updateGroup, deleteGroup, importGroups, importStaff, classes, addClass, updateClass, deleteClass, importClasses } = useContext(AppContext);
   const [analyticsRefreshing, setAnalyticsRefreshing] = React.useState(false);
 
-  // ── Onboarding ───────────────────────────────────────
+  // â”€â”€ Onboarding â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ const AdminDashboard = () => {
     setShowOnboarding(false);
   };
 
-  // handleOnboardingNavigate: only navigates — Onboarding minimizes itself
+  // handleOnboardingNavigate: only navigates â€” Onboarding minimizes itself
   const handleOnboardingNavigate = (tab) => {
     handleTabClick(tab);
   };
@@ -101,7 +101,7 @@ const AdminDashboard = () => {
     setOnboardingStepDoneKey(key);
     setTimeout(() => setOnboardingStepDoneKey(null), 100);
   };
-  // ─────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleRefreshAnalytics = async () => {
     setAnalyticsRefreshing(true);
@@ -344,7 +344,7 @@ const AdminDashboard = () => {
         setProfileSettings({ ...profileSettings, password: '' });
       }
     } else {
-      toast('Belum ada perubahan data yang disimpan.', { icon: 'ℹ️' });
+      toast('Belum ada perubahan data yang disimpan.', { icon: 'â„¹ï¸ڈ' });
     }
   };
 
@@ -746,7 +746,7 @@ const AdminDashboard = () => {
     toast.success('File PDF berhasil diunduh');
   };
 
-  // ── Export per-ujian ──────────────────────────────────────
+  // â”€â”€ Export per-ujian â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const exportExamToExcel = (eg) => {
     const formattedData = eg.records.map(r => ({
       'NIM': students.find(s => s.name === r.studentName)?.nis || '-',
@@ -789,7 +789,7 @@ const AdminDashboard = () => {
     toast.success('File PDF ujian berhasil diunduh');
   };
 
-  // ── Kelompok Import/Export ────────────────────────────────
+  // â”€â”€ Kelompok Import/Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const downloadGroupTemplate = () => {
     const templateData = [
       { 'Nama Kelompok': 'Kelompok A', 'Keterangan': 'Kelas X IPA 1', 'Anggota (NIS pisah koma)': '10101,10102,10103' },
@@ -841,7 +841,7 @@ const AdminDashboard = () => {
     e.target.value = null;
   };
 
-  // ── Ruangan Import/Export ─────────────────────────────────
+  // â”€â”€ Ruangan Import/Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const downloadRoomTemplate = () => {
     const templateData = [
       { 'Kode Ruangan': 'LAB-01', 'Nama Ruangan': 'Laboratorium Komputer 1', 'Kapasitas': 30, 'Status': 'Tersedia' },
@@ -896,7 +896,7 @@ const AdminDashboard = () => {
     e.target.value = null;
   };
 
-  // ── Pegawai Import/Export ─────────────────────────────────
+  // â”€â”€ Pegawai Import/Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const downloadStaffTemplate = () => {
     const templateData = [
       { 'Username Login': 'guru.budi', 'Nama Tampilan': 'Budi Santoso, S.Pd', 'Peran': 'guru', 'Kata Sandi Awal': 'sandi123' },
@@ -1669,7 +1669,7 @@ const AdminDashboard = () => {
                         {expandedAnalyticsExamId === eg.examId && eg.records.map((h, i) => (
                           <tr key={i} style={{ background: 'rgba(255,255,255,0.015)', borderLeft: '3px solid rgba(59,130,246,0.4)' }}>
                             <td style={{ paddingLeft: '28px', color: 'var(--text-light)' }}>
-                              <span style={{ color: 'var(--text-muted)', marginRight: '6px' }}>↳</span>
+                              <span style={{ color: 'var(--text-muted)', marginRight: '6px' }}>â†³</span>
                               {h.studentName || 'Anonim'}
                               <span style={{ marginLeft: '8px', fontSize: '0.78rem', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', padding: '1px 6px', borderRadius: '4px' }}>
                                 {students.find(s => s.name === h.studentName)?.nis || '-'}
@@ -1769,7 +1769,7 @@ const AdminDashboard = () => {
                         />
                         <div>
                           <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{s.name}</div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{s.nis} · {s.class}</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{s.nis} آ· {s.class}</div>
                         </div>
                       </label>
                     ))}
@@ -1838,7 +1838,7 @@ const AdminDashboard = () => {
                     <button className="back-btn" onClick={() => { setQBankSelectedSubject(null); setQBankSearch(''); setQBankPage(1); setShowBankForm(false); setEditingQuestionId(null); }} style={{ marginBottom: '6px' }}>
                       <ArrowLeft size={16} /> Kembali ke Daftar Mata Pelajaran
                     </button>
-                    <h1>📚 {qBankSelectedSubject}</h1>
+                    <h1>ًں“ڑ {qBankSelectedSubject}</h1>
                     <p>{questions.filter(q => q.subject === qBankSelectedSubject).length} soal tersedia</p>
                   </>
                 ) : (
@@ -1858,21 +1858,19 @@ const AdminDashboard = () => {
                   <span className="hide-on-mobile">Impor Excel</span>
                   <input type="file" accept=".xlsx, .xls, .csv" onChange={handleExcelImport} style={{ display: 'none' }} />
                 </label>
-                {qBankSelectedSubject && (
-                  <button className="btn-primary-admin" onClick={() => {
+                <button className="btn-primary-admin" onClick={() => {
                     setEditingQuestionId(null);
-                    setNewBankQuestion({ subject: qBankSelectedSubject, text: '', options: ['', '', '', '', ''], optionImages: ['', '', '', '', ''], correctOption: 0 });
+                    setNewBankQuestion({ subject: qBankSelectedSubject || '', text: '', options: ['', '', '', '', ''], optionImages: ['', '', '', '', ''], correctOption: 0 });
                     setShowBankForm(!showBankForm);
                   }}>
                     <Plus size={18} />
                     <span className="hide-on-mobile">{showBankForm ? 'Batal' : 'Tambah Soal'}</span>
                   </button>
-                )}
               </div>
             </div>
 
-            {/* Add/Edit Form — only when a subject is selected */}
-            {qBankSelectedSubject && showBankForm && (
+            {/* Add/Edit Form */}
+            {showBankForm && (
               <div className="admin-recent-section glass-panel fade-in" style={{ marginBottom: '24px' }}>
                 <div className="section-header flex-between">
                   <h3>{editingQuestionId ? 'Edit Soal Bank' : 'Penambahan Soal Tunggal (Bank)'}</h3>
@@ -1925,7 +1923,7 @@ const AdminDashboard = () => {
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '24px', justifyContent: 'flex-end' }}>
                   {editingQuestionId && (
-                    <button className="btn-secondary-admin" onClick={() => { setEditingQuestionId(null); setNewBankQuestion({ subject: qBankSelectedSubject || 'Umum', text: '', options: ['', '', '', '', ''], correctOption: 0 }); setShowBankForm(false); }}>Batal Edit</button>
+                    <button className="btn-secondary-admin" onClick={() => { setEditingQuestionId(null); setNewBankQuestion({ subject: qBankSelectedSubject || '', text: '', options: ['', '', '', '', ''], correctOption: 0 }); setShowBankForm(false); }}>Batal Edit</button>
                   )}
                   <button className="btn-primary-admin" onClick={handleSaveBankQuestion}>
                     <Save size={18} /> {editingQuestionId ? 'Simpan Revisi Soal' : 'Simpan Soal ke Bank'}
@@ -1934,7 +1932,7 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* SUBJECT CARDS — shown when no subject selected */}
+            {/* SUBJECT CARDS â€” shown when no subject selected */}
             {!qBankSelectedSubject && (() => {
               const subjectGroups = questions.reduce((acc, q) => {
                 if (!acc[q.subject]) acc[q.subject] = 0;
@@ -1979,7 +1977,7 @@ const AdminDashboard = () => {
               );
             })()}
 
-            {/* QUESTIONS TABLE — shown when a subject is selected */}
+            {/* QUESTIONS TABLE â€” shown when a subject is selected */}
             {qBankSelectedSubject && (() => {
               const handleQBankSort = (col) => {
                 if (qBankSortCol === col) setQBankSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -1987,8 +1985,8 @@ const AdminDashboard = () => {
                 setQBankPage(1);
               };
               const SortIcon = ({ col }) => {
-                if (qBankSortCol !== col) return <span style={{ opacity: 0.3, fontSize: '0.7rem' }}> ⇅</span>;
-                return <span style={{ color: '#38bdf8', fontSize: '0.7rem' }}>{qBankSortDir === 'asc' ? ' ↑' : ' ↓'}</span>;
+                if (qBankSortCol !== col) return <span style={{ opacity: 0.3, fontSize: '0.7rem' }}> â‡…</span>;
+                return <span style={{ color: '#38bdf8', fontSize: '0.7rem' }}>{qBankSortDir === 'asc' ? ' â†‘' : ' â†“'}</span>;
               };
               let qList = questions.filter(q =>
                 q.subject === qBankSelectedSubject &&
@@ -2068,15 +2066,15 @@ const AdminDashboard = () => {
                   {/* Pagination */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginTop: '16px' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-                      {totalRows === 0 ? 'Tidak ada data' : `Menampilkan ${pageStart + 1}–${Math.min(pageStart + qBankPerPage, totalRows)} dari ${totalRows} data`}
+                      {totalRows === 0 ? 'Tidak ada data' : `Menampilkan ${pageStart + 1}â€“${Math.min(pageStart + qBankPerPage, totalRows)} dari ${totalRows} data`}
                     </span>
                     <div style={{ display: 'flex', gap: '4px' }}>
-                      {[{label:'«',fn:()=>setQBankPage(1)},{label:'‹',fn:()=>setQBankPage(p=>Math.max(1,p-1))}].map(b=><button key={b.label} onClick={b.fn} disabled={safePage===1} style={{padding:'5px 10px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'6px',color:safePage===1?'var(--text-muted)':'var(--text-light)',cursor:safePage===1?'not-allowed':'pointer'}}>{b.label}</button>)}
+                      {[{label:'آ«',fn:()=>setQBankPage(1)},{label:'â€¹',fn:()=>setQBankPage(p=>Math.max(1,p-1))}].map(b=><button key={b.label} onClick={b.fn} disabled={safePage===1} style={{padding:'5px 10px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'6px',color:safePage===1?'var(--text-muted)':'var(--text-light)',cursor:safePage===1?'not-allowed':'pointer'}}>{b.label}</button>)}
                       {Array.from({length:totalPages},(_,i)=>i+1).filter(p=>p===1||p===totalPages||Math.abs(p-safePage)<=2).reduce((acc,p,idx,arr)=>{if(idx>0&&p-arr[idx-1]>1)acc.push('...');acc.push(p);return acc;},[]).map((p,idx)=>
-                        p==='...'?<span key={`e${idx}`} style={{padding:'5px 8px',color:'var(--text-muted)'}}>…</span>:
+                        p==='...'?<span key={`e${idx}`} style={{padding:'5px 8px',color:'var(--text-muted)'}}>â€¦</span>:
                         <button key={p} onClick={()=>setQBankPage(p)} style={{padding:'5px 10px',background:p===safePage?'rgba(14,165,233,0.3)':'rgba(255,255,255,0.05)',border:`1px solid ${p===safePage?'#0ea5e9':'rgba(255,255,255,0.1)'}`,borderRadius:'6px',color:p===safePage?'#38bdf8':'var(--text-light)',cursor:'pointer',fontWeight:p===safePage?700:400}}>{p}</button>
                       )}
-                      {[{label:'›',fn:()=>setQBankPage(p=>Math.min(totalPages,p+1))},{label:'»',fn:()=>setQBankPage(totalPages)}].map(b=><button key={b.label} onClick={b.fn} disabled={safePage===totalPages} style={{padding:'5px 10px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'6px',color:safePage===totalPages?'var(--text-muted)':'var(--text-light)',cursor:safePage===totalPages?'not-allowed':'pointer'}}>{b.label}</button>)}
+                      {[{label:'â€؛',fn:()=>setQBankPage(p=>Math.min(totalPages,p+1))},{label:'آ»',fn:()=>setQBankPage(totalPages)}].map(b=><button key={b.label} onClick={b.fn} disabled={safePage===totalPages} style={{padding:'5px 10px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'6px',color:safePage===totalPages?'var(--text-muted)':'var(--text-light)',cursor:safePage===totalPages?'not-allowed':'pointer'}}>{b.label}</button>)}
                     </div>
                   </div>
                 </div>
@@ -2437,7 +2435,7 @@ const AdminDashboard = () => {
                 <h3 style={{ margin: 0, color: '#ef4444', fontSize: '1rem', fontWeight: 700 }}>Zona Berbahaya</h3>
               </div>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '20px', lineHeight: 1.6 }}>
-                Menghapus akun akan <strong style={{ color: '#f87171' }}>memusnahkan secara permanen</strong> seluruh data Anda — ujian, soal, siswa, kelas, ruangan, sekolah, riwayat, dan semua staf yang terdaftar di bawah akun ini. Tindakan ini tidak dapat dipulihkan.
+                Menghapus akun akan <strong style={{ color: '#f87171' }}>memusnahkan secara permanen</strong> seluruh data Anda â€” ujian, soal, siswa, kelas, ruangan, sekolah, riwayat, dan semua staf yang terdaftar di bawah akun ini. Tindakan ini tidak dapat dipulihkan.
               </p>
               <button
                 onClick={deleteAllAdminData}
@@ -2908,7 +2906,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Onboarding wizard — shown on first login */}
+      {/* Onboarding wizard â€” shown on first login */}
       {showOnboarding && (
         <Onboarding
           onNavigate={handleOnboardingNavigate}
