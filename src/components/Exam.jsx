@@ -310,6 +310,35 @@ const Exam = () => {
     );
   }
 
+  // App-lock guard: if require_app is set, only allow access from iTest app
+  if (examData.require_app) {
+    const isITestApp = typeof window !== 'undefined' &&
+      (!!window.Capacitor || navigator.userAgent.toLowerCase().includes('itest'));
+    if (!isITestApp) {
+      return (
+        <div className="exam-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ textAlign: 'center', padding: '40px', maxWidth: '440px' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📱</div>
+            <h2 style={{ color: '#f87171', marginBottom: '12px' }}>Ujian Hanya untuk Aplikasi iTest</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '28px', lineHeight: 1.6 }}>
+              Ujian ini tidak dapat dikerjakan melalui browser biasa. Silakan buka ujian menggunakan aplikasi <strong>iTest</strong>.
+            </p>
+            <a
+              href="https://play.google.com/store/apps/details?id=id.quizb.itest"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: '#0ea5e9', color: '#fff', padding: '12px 24px', borderRadius: '12px', textDecoration: 'none', fontWeight: 600, fontSize: '1rem', marginBottom: '20px' }}
+            >
+              Download iTest di Play Store
+            </a>
+            <br />
+            <button className="btn-primary" style={{ marginTop: '8px' }} onClick={() => navigate('/dashboard')}>Kembali ke Dashboard</button>
+          </div>
+        </div>
+      );
+    }
+  }
+
   // Class-based access guard
   if (examData.class_id) {
     const examClass = classes.find(c => c.id === examData.class_id);

@@ -205,6 +205,7 @@ export const AppProvider = ({ children }) => {
       max_score: configItem?.max_score ?? 100,
       point_per_question: configItem?.point_per_question ?? 1,
       display_count: configItem?.display_count ?? null,
+      require_app: configItem?.require_app ?? false,
     };
   };
 
@@ -685,6 +686,7 @@ export const AppProvider = ({ children }) => {
       max_score: newExam.max_score ? parseFloat(newExam.max_score) : 100,
       point_per_question: newExam.point_per_question ? parseFloat(newExam.point_per_question) : 1,
       display_count: newExam.display_count ? parseInt(newExam.display_count) : null,
+      require_app: newExam.require_app || false,
     };
     const questionsWithConfig = [configItem, ...(newExam.questions || [])];
 

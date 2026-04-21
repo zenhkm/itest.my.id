@@ -504,7 +504,8 @@ const AdminDashboard = () => {
     score_mode: 'max_score',
     max_score: 100,
     point_per_question: 1,
-    display_count: ''
+    display_count: '',
+    require_app: false
   });
 
   const handleLogout = () => {
@@ -680,7 +681,7 @@ const AdminDashboard = () => {
     }
 
     await addExam(newExam);
-    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, group_id: '', room_id: '', class_id: '', score_mode: 'max_score', max_score: 100, point_per_question: 1, display_count: '' });
+    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, group_id: '', room_id: '', class_id: '', score_mode: 'max_score', max_score: 100, point_per_question: 1, display_count: '', require_app: false });
     setActiveTab('exams');
   };
 
@@ -693,7 +694,7 @@ const AdminDashboard = () => {
     await addExam({ ...newExam, questions: questionsWithPoints });
     setShowPointsModal(false);
     setQuestionPoints([]);
-    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, group_id: '', room_id: '', class_id: '', score_mode: 'max_score', max_score: 100, point_per_question: 1, display_count: '' });
+    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, group_id: '', room_id: '', class_id: '', score_mode: 'max_score', max_score: 100, point_per_question: 1, display_count: '', require_app: false });
     setActiveTab('exams');
   };
 
@@ -1330,7 +1331,8 @@ const AdminDashboard = () => {
                               score_mode: exam.score_mode || 'max_score',
                               max_score: exam.max_score || 100,
                               point_per_question: exam.point_per_question || 1,
-                              display_count: exam.display_count || ''
+                              display_count: exam.display_count || '',
+                              require_app: exam.require_app || false
                             });
                             setActiveTab('add-exam');
                             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1368,7 +1370,7 @@ const AdminDashboard = () => {
                 {editingExamId && (
                   <button className="btn-secondary-admin" onClick={() => {
                     setEditingExamId(null);
-                    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, score_mode: 'max_score', max_score: 100, point_per_question: 1, display_count: '' });
+                    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, score_mode: 'max_score', max_score: 100, point_per_question: 1, display_count: '', require_app: false });
                     setActiveTab('exams');
                   }}>Batal Edit</button>
                 )}
@@ -1546,6 +1548,16 @@ const AdminDashboard = () => {
                     style={{ width: '20px', height: '20px', margin: 0 }}
                   />
                   <label htmlFor="show_discussion" style={{ margin: 0, cursor: 'pointer' }}>Izinkan Siswa Melihat Pembahasan Pascaujian</label>
+                </div>
+                <div className="form-group-admin" style={{ flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="checkbox"
+                    id="require_app"
+                    checked={newExam.require_app}
+                    onChange={(e) => setNewExam({ ...newExam, require_app: e.target.checked })}
+                    style={{ width: '20px', height: '20px', margin: 0 }}
+                  />
+                  <label htmlFor="require_app" style={{ margin: 0, cursor: 'pointer' }}>Wajib Dikerjakan via Aplikasi iTest</label>
                 </div>
               </div>
             </div>
@@ -2240,7 +2252,8 @@ const AdminDashboard = () => {
                                 score_mode: exam.score_mode || 'max_score',
                                 max_score: exam.max_score || 100,
                                 point_per_question: exam.point_per_question || 1,
-                                display_count: exam.display_count || ''
+                                display_count: exam.display_count || '',
+                                require_app: exam.require_app || false
                               });
                               setActiveTab('add-exam');
                               window.scrollTo({ top: 0, behavior: 'smooth' });
