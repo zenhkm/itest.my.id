@@ -57,7 +57,10 @@ const Exam = () => {
             }
             return processedQ;
           });
-          setShuffledQuestions(processedQuestions);
+          // Apply display_count: only show that many questions if set
+          const displayCount = examData.display_count ? parseInt(examData.display_count) : null;
+          const finalQuestions = displayCount && displayCount > 0 ? processedQuestions.slice(0, displayCount) : processedQuestions;
+          setShuffledQuestions(finalQuestions);
         }
         setIsSessionLoaded(true);
       }
@@ -156,9 +159,44 @@ const Exam = () => {
       });
     });
 
-    // If no questions answered at all → score 0; otherwise normal scoring
+    // Scoring based on exam score_mode
+    const scoreMode = examData.score_mode || 'max_score';
     const answeredCount = Object.keys(currentAnswers).length;
-    const score = answeredCount === 0 ? 0 : Math.round((correctAnswers / totalQs) * 100);
+    let score = 0;
+    let status = 'Gagal';
+
+    if (answeredCount === 0) {
+      score = 0;
+    } else if (scoreMode === 'max_score') {
+      const maxScore = parseFloat(examData.max_score) || 100;
+      score = Math.round((correctAnswers / totalQs) * maxScore);
+    } else if (scoreMode === 'point_per_question') {
+      const ppt = parseFloat(examData.point_per_question) || 1;
+      score = correctAnswers * ppt;
+    } else if (scoreMode === 'per_question') {
+      // Sum individual points from questions answered correctly
+      currentQuestions.forEach((q, i) => {
+        if (details[i]?.isCorrect) {
+          score += parseFloat(q.point) || 1;
+        }
+      });
+      score = Math.round(score * 100) / 100; // round to 2dp
+    } else {
+      score = Math.round((correctAnswers / totalQs) * 100);
+    }
+
+    // Determine pass/fail as a percentage of max possible
+    let scorePercent;
+    if (scoreMode === 'point_per_question') {
+      const maxPossible = totalQs * (parseFloat(examData.point_per_question) || 1);
+      scorePercent = maxPossible > 0 ? (score / maxPossible) * 100 : 0;
+    } else if (scoreMode === 'per_question') {
+      const maxPossible = currentQuestions.reduce((s, q) => s + (parseFloat(q.point) || 1), 0);
+      scorePercent = maxPossible > 0 ? (score / maxPossible) * 100 : 0;
+    } else {
+      scorePercent = score; // max_score mode already 0-100 relative
+    }
+    status = scorePercent >= 70 ? 'Lulus' : 'Gagal';
 
     await saveResult({
       examId: examData.id,
@@ -167,7 +205,7 @@ const Exam = () => {
       score: score,
       totalQuestions: totalQs,
       correctAnswers: correctAnswers,
-      status: score >= 70 ? 'Lulus' : 'Gagal',
+      status: status,
       details: details
     });
 

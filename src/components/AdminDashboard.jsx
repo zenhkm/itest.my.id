@@ -118,6 +118,8 @@ const AdminDashboard = () => {
   const [editingQuestionId, setEditingQuestionId] = useState(null);
   const [editingExamId, setEditingExamId] = useState(null);
   const [editingStaffId, setEditingStaffId] = useState(null);
+  const [showPointsModal, setShowPointsModal] = useState(false);
+  const [questionPoints, setQuestionPoints] = useState([]);
 
   const [showStudentForm, setShowStudentForm] = useState(false);
   const [newStudent, setNewStudent] = useState({ nis: '', name: '', class: '', password: '' });
@@ -498,7 +500,11 @@ const AdminDashboard = () => {
     show_discussion: false,
     group_id: '',
     room_id: '',
-    class_id: ''
+    class_id: '',
+    score_mode: 'max_score',
+    max_score: 100,
+    point_per_question: 1,
+    display_count: ''
   });
 
   const handleLogout = () => {
@@ -666,8 +672,28 @@ const AdminDashboard = () => {
       return;
     }
 
+    // For per-question scoring, open the points modal first
+    if (newExam.score_mode === 'per_question') {
+      setQuestionPoints(newExam.questions.map(q => ({ id: q.id, point: q.point || 1 })));
+      setShowPointsModal(true);
+      return;
+    }
+
     await addExam(newExam);
-    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, group_id: '', room_id: '', class_id: '' });
+    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, group_id: '', room_id: '', class_id: '', score_mode: 'max_score', max_score: 100, point_per_question: 1, display_count: '' });
+    setActiveTab('exams');
+  };
+
+  const handleConfirmPointsAndSave = async () => {
+    // Merge points back into questions
+    const questionsWithPoints = newExam.questions.map(q => {
+      const found = questionPoints.find(p => p.id === q.id);
+      return { ...q, point: found ? parseFloat(found.point) || 1 : 1 };
+    });
+    await addExam({ ...newExam, questions: questionsWithPoints });
+    setShowPointsModal(false);
+    setQuestionPoints([]);
+    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, group_id: '', room_id: '', class_id: '', score_mode: 'max_score', max_score: 100, point_per_question: 1, display_count: '' });
     setActiveTab('exams');
   };
 
@@ -1300,7 +1326,11 @@ const AdminDashboard = () => {
                               shuffle_options: exam.shuffle_options || false,
                               start_time: exam.start_time || '',
                               end_time: exam.end_time || '',
-                              show_discussion: exam.show_discussion || false
+                              show_discussion: exam.show_discussion || false,
+                              score_mode: exam.score_mode || 'max_score',
+                              max_score: exam.max_score || 100,
+                              point_per_question: exam.point_per_question || 1,
+                              display_count: exam.display_count || ''
                             });
                             setActiveTab('add-exam');
                             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1338,7 +1368,7 @@ const AdminDashboard = () => {
                 {editingExamId && (
                   <button className="btn-secondary-admin" onClick={() => {
                     setEditingExamId(null);
-                    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false });
+                    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, score_mode: 'max_score', max_score: 100, point_per_question: 1, display_count: '' });
                     setActiveTab('exams');
                   }}>Batal Edit</button>
                 )}
@@ -1432,6 +1462,58 @@ const AdminDashboard = () => {
                       <option key={r.id} value={r.id} style={{ color: 'black' }}>{r.room_name} ({r.room_code}) - Kap. {r.capacity}</option>
                     ))}
                   </select>
+                </div>
+                <div className="form-group-admin">
+                  <label>Metode Penilaian</label>
+                  <select
+                    value={newExam.score_mode}
+                    onChange={(e) => setNewExam({ ...newExam, score_mode: e.target.value })}
+                    style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', color: 'var(--text-light)', fontFamily: 'inherit' }}
+                  >
+                    <option value="max_score" style={{ color: 'black' }}>Nilai Maksimal (skala 0–maks)</option>
+                    <option value="point_per_question" style={{ color: 'black' }}>Point per Soal (poin × jumlah benar)</option>
+                    <option value="per_question" style={{ color: 'black' }}>Point Individual per Soal</option>
+                  </select>
+                </div>
+                {newExam.score_mode === 'max_score' && (
+                  <div className="form-group-admin">
+                    <label>Nilai Maksimal</label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Contoh: 100"
+                      value={newExam.max_score}
+                      onChange={(e) => setNewExam({ ...newExam, max_score: e.target.value })}
+                    />
+                  </div>
+                )}
+                {newExam.score_mode === 'point_per_question' && (
+                  <div className="form-group-admin">
+                    <label>Poin per Soal</label>
+                    <input
+                      type="number"
+                      min="0.1"
+                      step="0.1"
+                      placeholder="Contoh: 10"
+                      value={newExam.point_per_question}
+                      onChange={(e) => setNewExam({ ...newExam, point_per_question: e.target.value })}
+                    />
+                  </div>
+                )}
+                {newExam.score_mode === 'per_question' && (
+                  <div className="form-group-admin">
+                    <label style={{ color: '#a78bfa' }}>Point per soal dikonfigurasi setelah klik Simpan Ujian</label>
+                  </div>
+                )}
+                <div className="form-group-admin">
+                  <label>Tampilkan Berapa Soal (Opsional)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Kosongkan = tampilkan semua soal"
+                    value={newExam.display_count}
+                    onChange={(e) => setNewExam({ ...newExam, display_count: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="form-grid" style={{ marginTop: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
@@ -2154,7 +2236,11 @@ const AdminDashboard = () => {
                                 shuffle_options: exam.shuffle_options || false,
                                 start_time: exam.start_time || '',
                                 end_time: exam.end_time || '',
-                                show_discussion: exam.show_discussion || false
+                                show_discussion: exam.show_discussion || false,
+                                score_mode: exam.score_mode || 'max_score',
+                                max_score: exam.max_score || 100,
+                                point_per_question: exam.point_per_question || 1,
+                                display_count: exam.display_count || ''
                               });
                               setActiveTab('add-exam');
                               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2909,6 +2995,48 @@ const AdminDashboard = () => {
           </div>
         )}
       </main>
+
+      {/* Per-Question Points Modal */}
+      {showPointsModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(0,0,0,0.75)', zIndex: 9999, backdropFilter: 'blur(6px)' }}>
+          <div className="glass-panel" style={{ width: '90%', maxWidth: '640px', maxHeight: '85vh', overflowY: 'auto', padding: '28px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', color: 'var(--text-light)', margin: 0 }}>Atur Poin per Soal</h2>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>Isi poin untuk setiap soal. Total nilai = jumlah poin soal yang dijawab benar.</p>
+              </div>
+              <button className="btn-secondary-admin" onClick={() => setShowPointsModal(false)} style={{ padding: '8px 14px' }}>Batal</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {newExam.questions.map((q, idx) => (
+                <div key={q.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '12px 16px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <span style={{ minWidth: '28px', fontWeight: 700, color: '#a78bfa', paddingTop: '2px' }}>{idx + 1}.</span>
+                  <p style={{ flex: 1, margin: 0, color: 'var(--text-light)', fontSize: '0.9rem', lineHeight: 1.5 }}>{q.text ? (q.text.length > 120 ? q.text.slice(0, 120) + '...' : q.text) : '(Soal tanpa teks)'}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Poin:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={questionPoints.find(p => p.id === q.id)?.point ?? 1}
+                      onChange={(e) => setQuestionPoints(prev => prev.map(p => p.id === q.id ? { ...p, point: e.target.value } : p))}
+                      style={{ width: '70px', padding: '6px 10px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', color: 'var(--text-light)', fontFamily: 'inherit', textAlign: 'center' }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Total poin maksimal: <strong style={{ color: 'var(--text-light)' }}>{questionPoints.reduce((s, p) => s + (parseFloat(p.point) || 0), 0)}</strong>
+              </span>
+              <button className="btn-primary-admin" onClick={handleConfirmPointsAndSave}>
+                <Save size={16} /> Simpan Ujian
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pick Question from Bank Modal */}
       {showBankModal && (

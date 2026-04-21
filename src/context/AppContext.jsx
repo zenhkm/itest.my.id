@@ -675,6 +675,10 @@ export const AppProvider = ({ children }) => {
       group_id: newExam.group_id || null,
       room_id: newExam.room_id || null,
       class_id: newExam.class_id || null,
+      score_mode: newExam.score_mode || 'max_score',
+      max_score: newExam.max_score ? parseFloat(newExam.max_score) : 100,
+      point_per_question: newExam.point_per_question ? parseFloat(newExam.point_per_question) : 1,
+      display_count: newExam.display_count ? parseInt(newExam.display_count) : null,
       admin_id: user.admin_id
     };
 
