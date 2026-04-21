@@ -132,26 +132,30 @@ const Exam = () => {
 
   // Submission Handlers
   const forceSubmitResult = async () => {
-    if (!shuffledQuestions) return;
+    // Always use stateRef for latest values — avoids stale closure when called from effects/callbacks
+    const { answers: currentAnswers, shuffledQuestions: currentQuestions } = stateRef.current;
+    if (!currentQuestions) return;
     setIsFinished(true);
 
     let correctAnswers = 0;
     const details = [];
-    const totalQs = shuffledQuestions.length;
+    const totalQs = currentQuestions.length;
 
-    shuffledQuestions.forEach(q => {
-      const isCorrect = answers[q.id] === q.correctOption || answers[q.id] === q.correctAnswer;
+    currentQuestions.forEach(q => {
+      const isCorrect = currentAnswers[q.id] === q.correctOption || currentAnswers[q.id] === q.correctAnswer;
       if (isCorrect) correctAnswers++;
 
       details.push({
         questionText: q.text,
-        studentAnswer: answers[q.id] !== undefined ? q.options[answers[q.id]] : 'Tidak Dijawab',
+        studentAnswer: currentAnswers[q.id] !== undefined ? q.options[currentAnswers[q.id]] : 'Tidak Dijawab',
         correctAnswer: q.options[q.correctOption],
         isCorrect: isCorrect
       });
     });
 
-    const score = Math.round((correctAnswers / totalQs) * 100) || 0;
+    // If no questions answered at all → score 0; otherwise normal scoring
+    const answeredCount = Object.keys(currentAnswers).length;
+    const score = answeredCount === 0 ? 0 : Math.round((correctAnswers / totalQs) * 100);
 
     await saveResult({
       examId: examData.id,
@@ -199,11 +203,11 @@ const Exam = () => {
   // Time's Up / Limit Reached Effect
   useEffect(() => {
     if (timeLeft === 0 && !isFinished && shuffledQuestions && shuffledQuestions.length > 0) {
-      forceSubmitResult(); // Auto submit tanpa konfirmasi saat waktu habis
+      forceSubmitCallbackRef.current(); // Use ref to always get latest closure
     }
     if (violations >= VIOLATION_LIMIT && !isFinished && shuffledQuestions && shuffledQuestions.length > 0) {
       toast.error("PELANGGARAN MAKSIMAL. Ujian dihentikan paksa!", { duration: 7000, icon: '🚨' });
-      forceSubmitResult(); // Kick out abuser
+      forceSubmitCallbackRef.current(); // Use ref to always get latest closure
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, violations]);
