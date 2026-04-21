@@ -1700,10 +1700,6 @@ const AdminDashboard = () => {
         {/* Live Record View */}
         {activeTab === 'live-record' && user?.role === 'admin' && (
           <div className="dashboard-view fade-in">
-            <div className="view-header">
-              <h1>Live Record - Pemantauan Ujian</h1>
-              <p>Memantau sesi ujian yang sedang berlangsung secara real-time.</p>
-            </div>
             <LiveRecord />
           </div>
         )}

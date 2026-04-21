@@ -673,6 +673,16 @@
   display: none !important;
 }
 
+.hide-on-mobile {
+  display: inline !important;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .mobile-menu-close {
   background: rgba(255, 255, 255, 0.1);
   border: none;
@@ -692,6 +702,10 @@
 @media (max-width: 768px) {
   .hide-on-desktop {
     display: flex !important;
+  }
+
+  .hide-on-mobile {
+    display: none !important;
   }
 
   .admin-container {
@@ -746,16 +760,50 @@
     width: 100%;
   }
 
+  .search-bar {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  .dashboard-view,
+  .analytics-view,
+  .question-bank-view,
+  .exams-view,
+  .students-view,
+  .staff-view,
+  .settings-view,
+  .school-data-view,
+  .rooms-data-view,
+  .add-exam-view {
+    padding: 16px;
+    gap: 16px;
+  }
+
   .view-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 12px;
+  }
+
+  .view-header h1 {
+    font-size: 1.4rem;
   }
   
   .view-header > div:last-child {
     flex-wrap: wrap;
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .flex-between {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .flex-between > div:last-child,
+  .view-header .flex-wrap-buttons {
+    flex-wrap: wrap;
+    width: 100%;
   }
   
   .options-grid {
@@ -776,4 +824,41 @@
   .admin-main {
     overflow-y: visible;
   }
-}
+
+  .admin-table th,
+  .admin-table td {
+    padding: 10px 8px;
+    font-size: 0.85rem;
+  }
+
+  .admin-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .admin-stat-card {
+    padding: 16px;
+  }
+
+  .stat-content h3 {
+    font-size: 1.6rem;
+  }
+
+  .admin-recent-section {
+    padding: 12px;
+  }
+
+  .btn-primary-admin,
+  .btn-secondary-admin {
+    padding: 10px 12px;
+    font-size: 0.88rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;

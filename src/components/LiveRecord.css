@@ -1,4 +1,4 @@
-.live-record { padding: 20px; }
+.live-record { padding: 0; }
 .view-header h1 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px 0; }
 .view-header p { margin: 0 0 16px 0; color: var(--text-muted); }
 .live-meta { display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap; align-items:center }
@@ -6,8 +6,8 @@
 .btn-refresh-live { display:flex; align-items:center; gap:6px; background:rgba(56,189,248,0.08); color:#38bdf8; border:1px solid rgba(56,189,248,0.35); padding:8px 14px; border-radius:10px; cursor:pointer; font-weight:600; font-size:0.88rem; transition:opacity .2s }
 .btn-refresh-live:hover { opacity:.85 }
 .btn-refresh-live:disabled { opacity:.55; cursor:not-allowed }
-.live-table-wrap { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:8px; }
-.live-table { width:100%; border-collapse:collapse; }
+.live-table-wrap { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.live-table { width:100%; border-collapse:collapse; min-width: 500px; }
 .live-table th, .live-table td { padding:10px 12px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.03); }
 .live-table thead th { font-size:0.95rem; color:var(--text-muted); }
 .live-table tbody tr:hover { background: rgba(255,255,255,0.01); }
@@ -16,5 +16,5 @@
 .btn-force:hover { opacity:0.95 }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @media (max-width:720px) {
-  .live-table th:nth-child(4), .live-table td:nth-child(4), .live-table th:nth-child(5), .live-table td:nth-child(5) { display:none }
+  .live-table th:nth-child(5), .live-table td:nth-child(5) { display:none }
 }
