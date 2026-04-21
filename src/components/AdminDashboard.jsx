@@ -1669,7 +1669,6 @@ const AdminDashboard = () => {
                         {expandedAnalyticsExamId === eg.examId && eg.records.map((h, i) => (
                           <tr key={i} style={{ background: 'rgba(255,255,255,0.015)', borderLeft: '3px solid rgba(59,130,246,0.4)' }}>
                             <td style={{ paddingLeft: '28px', color: 'var(--text-light)' }}>
-                              <span style={{ color: 'var(--text-muted)', marginRight: '6px' }}>â†³</span>
                               {h.studentName || 'Anonim'}
                               <span style={{ marginLeft: '8px', fontSize: '0.78rem', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', padding: '1px 6px', borderRadius: '4px' }}>
                                 {students.find(s => s.name === h.studentName)?.nis || '-'}
