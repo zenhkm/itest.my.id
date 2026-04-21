@@ -234,6 +234,7 @@ const AdminDashboard = () => {
   const [qBankSortDir, setQBankSortDir] = useState('asc');
   const [qBankPage, setQBankPage] = useState(1);
   const [qBankPerPage, setQBankPerPage] = useState(10);
+  const [qBankSelectedSubject, setQBankSelectedSubject] = useState(null);
   const [showBankModal, setShowBankModal] = useState(false);
   const [selectedBankQuestions, setSelectedBankQuestions] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -1829,46 +1830,49 @@ const AdminDashboard = () => {
         {/* Question Bank View */}
         {activeTab === 'question-bank' && ['admin', 'guru'].includes(user?.role) && (
           <div className="dashboard-view fade-in">
+            {/* Header */}
             <div className="view-header flex-between" style={{ flexWrap: 'wrap', gap: '16px' }}>
               <div>
-                <h1>Bank Soal Utama</h1>
-                <p>Kelola suplai pertanyaan terpusat untuk disedot kapan saja.</p>
+                {qBankSelectedSubject ? (
+                  <>
+                    <button className="back-btn" onClick={() => { setQBankSelectedSubject(null); setQBankSearch(''); setQBankPage(1); setShowBankForm(false); setEditingQuestionId(null); }} style={{ marginBottom: '6px' }}>
+                      <ArrowLeft size={16} /> Kembali ke Daftar Mata Pelajaran
+                    </button>
+                    <h1>📚 {qBankSelectedSubject}</h1>
+                    <p>{questions.filter(q => q.subject === qBankSelectedSubject).length} soal tersedia</p>
+                  </>
+                ) : (
+                  <>
+                    <h1>Bank Soal Utama</h1>
+                    <p>Pilih mata pelajaran untuk mengelola soal-soalnya.</p>
+                  </>
+                )}
               </div>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <select
-                  className="admin-select"
-                  value={qBankSubjectFilter}
-                  onChange={(e) => setQBankSubjectFilter(e.target.value)}
-                  style={{ padding: '10px 16px', background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '10px', color: 'var(--text-light)', fontFamily: 'inherit', fontWeight: '500' }}
-                >
-                  <option value="all" style={{ color: 'black' }}>Semua Mata Pelajaran</option>
-                  {[...new Set(questions.map(q => q.subject))].map(sub => (
-                    <option key={sub} value={sub} style={{ color: 'black' }}>{sub}</option>
-                  ))}
-                </select>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <button className="btn-secondary-admin" onClick={downloadExcelTemplate} style={{ borderColor: '#10b981', color: '#10b981', padding: '10px 16px' }}>
                   <Download size={18} />
-                  <span>Unduh Template</span>
+                  <span className="hide-on-mobile">Unduh Template</span>
                 </button>
-
                 <label className="btn-secondary-admin" style={{ cursor: 'pointer', margin: 0, padding: '10px 16px', borderColor: '#3b82f6', color: '#3b82f6' }}>
                   <UploadCloud size={18} />
                   <span className="hide-on-mobile">Impor Excel</span>
                   <input type="file" accept=".xlsx, .xls, .csv" onChange={handleExcelImport} style={{ display: 'none' }} />
                 </label>
-
-                <button className="btn-primary-admin" onClick={() => {
-                  setEditingQuestionId(null);
-                  setNewBankQuestion({ subject: 'Umum', text: '', options: ['', '', '', '', ''], optionImages: ['', '', '', '', ''], correctOption: 0 });
-                  setShowBankForm(!showBankForm);
-                }}>
-                  <Plus size={18} />
-                  <span className="hide-on-mobile">{showBankForm ? 'Batal' : 'Tambah Manual'}</span>
-                </button>
+                {qBankSelectedSubject && (
+                  <button className="btn-primary-admin" onClick={() => {
+                    setEditingQuestionId(null);
+                    setNewBankQuestion({ subject: qBankSelectedSubject, text: '', options: ['', '', '', '', ''], optionImages: ['', '', '', '', ''], correctOption: 0 });
+                    setShowBankForm(!showBankForm);
+                  }}>
+                    <Plus size={18} />
+                    <span className="hide-on-mobile">{showBankForm ? 'Batal' : 'Tambah Soal'}</span>
+                  </button>
+                )}
               </div>
             </div>
 
-            {showBankForm && (
+            {/* Add/Edit Form — only when a subject is selected */}
+            {qBankSelectedSubject && showBankForm && (
               <div className="admin-recent-section glass-panel fade-in" style={{ marginBottom: '24px' }}>
                 <div className="section-header flex-between">
                   <h3>{editingQuestionId ? 'Edit Soal Bank' : 'Penambahan Soal Tunggal (Bank)'}</h3>
@@ -1898,38 +1902,16 @@ const AdminDashboard = () => {
                   )}
                   <textarea rows={3} placeholder="Tuliskan isi pertanyaan..." value={newBankQuestion.text} onChange={e => setNewBankQuestion({ ...newBankQuestion, text: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: 'var(--text-light)' }} />
                 </div>
-
                 <div className="options-grid">
                   {newBankQuestion.options.map((opt, optIndex) => (
                     <div key={optIndex} className={`option-input-wrapper ${newBankQuestion.correctOption === optIndex ? 'is-correct' : ''}`} style={{ flexWrap: 'wrap' }}>
                       <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
-                        <input
-                          type="radio"
-                          name="bank-correct-option"
-                          checked={newBankQuestion.correctOption === optIndex}
-                          onChange={() => setNewBankQuestion({ ...newBankQuestion, correctOption: optIndex })}
-                          title="Tandai sebagai jawaban benar"
-                        />
+                        <input type="radio" name="bank-correct-option" checked={newBankQuestion.correctOption === optIndex} onChange={() => setNewBankQuestion({ ...newBankQuestion, correctOption: optIndex })} title="Tandai sebagai jawaban benar" />
                         <div className="option-letter">{String.fromCharCode(65 + optIndex)}</div>
-                        <input
-                          type="text"
-                          style={{ flex: 1 }}
-                          placeholder={`Teks Opsi ${String.fromCharCode(65 + optIndex)}`}
-                          value={opt}
-                          onChange={(e) => {
-                            const newOpts = [...newBankQuestion.options];
-                            newOpts[optIndex] = e.target.value;
-                            setNewBankQuestion({ ...newBankQuestion, options: newOpts });
-                          }}
-                        />
+                        <input type="text" style={{ flex: 1 }} placeholder={`Teks Opsi ${String.fromCharCode(65 + optIndex)}`} value={opt} onChange={(e) => { const newOpts = [...newBankQuestion.options]; newOpts[optIndex] = e.target.value; setNewBankQuestion({ ...newBankQuestion, options: newOpts }); }} />
                         <label style={{ cursor: 'pointer', marginLeft: '8px', color: '#3b82f6', display: 'flex', alignItems: 'center' }} title="Sisipkan Gambar Opsi">
                           <UploadCloud size={18} />
-                          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
-                            const file = e.target.files[0];
-                            if (!file) return;
-                            const url = await handleImageUpload(file);
-                            if (url) handleBankOptionImageChange(optIndex, url);
-                          }} />
+                          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => { const file = e.target.files[0]; if (!file) return; const url = await handleImageUpload(file); if (url) handleBankOptionImageChange(optIndex, url); }} />
                         </label>
                       </div>
                       {newBankQuestion.optionImages && newBankQuestion.optionImages[optIndex] && (
@@ -1941,14 +1923,9 @@ const AdminDashboard = () => {
                     </div>
                   ))}
                 </div>
-
                 <div style={{ display: 'flex', gap: '8px', marginTop: '24px', justifyContent: 'flex-end' }}>
                   {editingQuestionId && (
-                    <button className="btn-secondary-admin" onClick={() => {
-                      setEditingQuestionId(null);
-                      setNewBankQuestion({ subject: 'Umum', text: '', options: ['', '', '', '', ''], correctOption: 0 });
-                      setShowBankForm(false);
-                    }}>Batal Edit</button>
+                    <button className="btn-secondary-admin" onClick={() => { setEditingQuestionId(null); setNewBankQuestion({ subject: qBankSelectedSubject || 'Umum', text: '', options: ['', '', '', '', ''], correctOption: 0 }); setShowBankForm(false); }}>Batal Edit</button>
                   )}
                   <button className="btn-primary-admin" onClick={handleSaveBankQuestion}>
                     <Save size={18} /> {editingQuestionId ? 'Simpan Revisi Soal' : 'Simpan Soal ke Bank'}
@@ -1957,8 +1934,53 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {(() => {
-              // --- DataTables logic ---
+            {/* SUBJECT CARDS — shown when no subject selected */}
+            {!qBankSelectedSubject && (() => {
+              const subjectGroups = questions.reduce((acc, q) => {
+                if (!acc[q.subject]) acc[q.subject] = 0;
+                acc[q.subject]++;
+                return acc;
+              }, {});
+              const subjectList = Object.entries(subjectGroups).sort((a, b) => a[0].localeCompare(b[0]));
+              const subjectColors = ['#0ea5e9','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4','#84cc16'];
+              return (
+                <div>
+                  {subjectList.length === 0 ? (
+                    <div className="admin-recent-section glass-panel" style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
+                      <BookOpen size={40} style={{ opacity: 0.3, marginBottom: '12px' }} />
+                      <p>Bank soal masih kosong. Silakan impor dari format Excel (.xlsx).</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+                      {subjectList.map(([subject, count], idx) => {
+                        const color = subjectColors[idx % subjectColors.length];
+                        return (
+                          <div
+                            key={subject}
+                            onClick={() => { setQBankSelectedSubject(subject); setQBankSearch(''); setQBankPage(1); setShowBankForm(false); }}
+                            style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.07)`, borderLeft: `4px solid ${color}`, borderRadius: '14px', padding: '20px 20px 18px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '10px' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = `rgba(255,255,255,0.06)`; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-light)', lineHeight: 1.3 }}>{subject}</span>
+                              <BookOpen size={18} style={{ color, opacity: 0.7, flexShrink: 0, marginLeft: '8px' }} />
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                              <span style={{ fontSize: '2rem', fontWeight: 800, color }}>{count}</span>
+                              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>soal</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* QUESTIONS TABLE — shown when a subject is selected */}
+            {qBankSelectedSubject && (() => {
               const handleQBankSort = (col) => {
                 if (qBankSortCol === col) setQBankSortDir(d => d === 'asc' ? 'desc' : 'asc');
                 else { setQBankSortCol(col); setQBankSortDir('asc'); }
@@ -1968,10 +1990,9 @@ const AdminDashboard = () => {
                 if (qBankSortCol !== col) return <span style={{ opacity: 0.3, fontSize: '0.7rem' }}> ⇅</span>;
                 return <span style={{ color: '#38bdf8', fontSize: '0.7rem' }}>{qBankSortDir === 'asc' ? ' ↑' : ' ↓'}</span>;
               };
-
-              let qList = filteredQuestions.filter(q =>
-                (qBankSubjectFilter === 'all' || q.subject === qBankSubjectFilter) &&
-                (qBankSearch === '' || q.text.toLowerCase().includes(qBankSearch.toLowerCase()) || q.subject.toLowerCase().includes(qBankSearch.toLowerCase()))
+              let qList = questions.filter(q =>
+                q.subject === qBankSelectedSubject &&
+                (qBankSearch === '' || q.text.toLowerCase().includes(qBankSearch.toLowerCase()))
               );
               if (qBankSortCol) {
                 qList = [...qList].sort((a, b) => {
@@ -1984,12 +2005,10 @@ const AdminDashboard = () => {
               const totalPages = Math.max(1, Math.ceil(totalRows / qBankPerPage));
               const safePage = Math.min(qBankPage, totalPages);
               const pageStart = (safePage - 1) * qBankPerPage;
-              const pageEnd = pageStart + qBankPerPage;
-              const pagedList = qList.slice(pageStart, pageEnd);
-
+              const pagedList = qList.slice(pageStart, pageStart + qBankPerPage);
               return (
                 <div className="admin-recent-section glass-panel">
-                  {/* DataTables toolbar */}
+                  {/* Toolbar */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                       <span>Tampilkan</span>
@@ -2000,31 +2019,24 @@ const AdminDashboard = () => {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Cari:</span>
-                      <input
-                        type="text"
-                        value={qBankSearch}
-                        onChange={e => { setQBankSearch(e.target.value); setQBankPage(1); }}
-                        placeholder="Ketik untuk cari..."
-                        style={{ padding: '6px 12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: 'var(--text-light)', fontSize: '0.9rem', width: '200px', outline: 'none' }}
-                      />
+                      <input type="text" value={qBankSearch} onChange={e => { setQBankSearch(e.target.value); setQBankPage(1); }} placeholder="Ketik untuk cari..." style={{ padding: '6px 12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: 'var(--text-light)', fontSize: '0.9rem', width: '200px', outline: 'none' }} />
                     </div>
                   </div>
-
                   <div className="table-responsive">
                     <table className="admin-table">
                       <thead>
                         <tr>
-                          <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleQBankSort('subject')}>Mapel <SortIcon col="subject" /></th>
-                          <th style={{ width: '40%', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleQBankSort('text')}>Pertanyaan <SortIcon col="text" /></th>
+                          <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: '1%' }}>#</th>
+                          <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleQBankSort('text')}>Pertanyaan <SortIcon col="text" /></th>
                           <th>Opsi Jawaban</th>
-                          <th>Aksi</th>
+                          <th style={{ whiteSpace: 'nowrap', width: '1%' }}>Aksi</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {pagedList.map(q => (
+                        {pagedList.map((q, idx) => (
                           <tr key={q.id}>
-                            <td><span className="badge badge-active">{q.subject}</span></td>
-                            <td><div style={{ maxHeight: '80px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{q.text}</div></td>
+                            <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{pageStart + idx + 1}</td>
+                            <td><div style={{ maxHeight: '80px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{q.text}</div></td>
                             <td>
                               <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                 {q.options.map((opt, i) => (
@@ -2038,53 +2050,33 @@ const AdminDashboard = () => {
                               <div style={{ display: 'flex', gap: '8px' }}>
                                 <button className="action-btn" title="Edit Soal" style={{ color: '#3b82f6' }} onClick={() => {
                                   setEditingQuestionId(q.id);
-                                  setNewBankQuestion({
-                                    subject: q.subject,
-                                    text: q.text,
-                                    imageUrl: q.imageUrl || '',
-                                    optionImages: [...(q.optionImages || []), '', '', '', '', ''].slice(0, 5),
-                                    options: [...(q.options || []), '', '', '', '', ''].slice(0, 5),
-                                    correctOption: typeof q.correctOption !== 'undefined' ? q.correctOption : 0
-                                  });
+                                  setNewBankQuestion({ subject: q.subject, text: q.text, imageUrl: q.imageUrl || '', optionImages: [...(q.optionImages || []), '', '', '', '', ''].slice(0, 5), options: [...(q.options || []), '', '', '', '', ''].slice(0, 5), correctOption: typeof q.correctOption !== 'undefined' ? q.correctOption : 0 });
                                   setShowBankForm(true);
                                   window.scrollTo({ top: 300, behavior: 'smooth' });
-                                }}>
-                                  <Edit size={16} />
-                                </button>
+                                }}><Edit size={16} /></button>
                                 <button className="action-btn" title="Hapus Permanen" onClick={() => deleteQuestion(q.id)}><Trash2 size={16} /></button>
                               </div>
                             </td>
                           </tr>
                         ))}
                         {pagedList.length === 0 && (
-                          <tr>
-                            <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
-                              {totalRows === 0 && qBankSearch === '' ? 'Bank soal masih kosong. Silakan impor dari format Excel (.xlsx).' : 'Tidak ada data yang cocok dengan pencarian.'}
-                            </td>
-                          </tr>
+                          <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>{qBankSearch ? 'Tidak ada soal yang cocok dengan pencarian.' : 'Belum ada soal untuk mata pelajaran ini.'}</td></tr>
                         )}
                       </tbody>
                     </table>
                   </div>
-
-                  {/* Pagination footer */}
+                  {/* Pagination */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginTop: '16px' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-                      {totalRows === 0 ? 'Tidak ada data' : `Menampilkan ${pageStart + 1}–${Math.min(pageEnd, totalRows)} dari ${totalRows} data`}
+                      {totalRows === 0 ? 'Tidak ada data' : `Menampilkan ${pageStart + 1}–${Math.min(pageStart + qBankPerPage, totalRows)} dari ${totalRows} data`}
                     </span>
                     <div style={{ display: 'flex', gap: '4px' }}>
-                      <button onClick={() => setQBankPage(1)} disabled={safePage === 1} style={{ padding: '5px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: safePage === 1 ? 'var(--text-muted)' : 'var(--text-light)', cursor: safePage === 1 ? 'not-allowed' : 'pointer' }}>«</button>
-                      <button onClick={() => setQBankPage(p => Math.max(1, p - 1))} disabled={safePage === 1} style={{ padding: '5px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: safePage === 1 ? 'var(--text-muted)' : 'var(--text-light)', cursor: safePage === 1 ? 'not-allowed' : 'pointer' }}>‹</button>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 2).reduce((acc, p, idx, arr) => {
-                        if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
-                        acc.push(p);
-                        return acc;
-                      }, []).map((p, idx) =>
-                        p === '...' ? <span key={`e${idx}`} style={{ padding: '5px 8px', color: 'var(--text-muted)' }}>…</span> :
-                        <button key={p} onClick={() => setQBankPage(p)} style={{ padding: '5px 10px', background: p === safePage ? 'rgba(14,165,233,0.3)' : 'rgba(255,255,255,0.05)', border: `1px solid ${p === safePage ? '#0ea5e9' : 'rgba(255,255,255,0.1)'}`, borderRadius: '6px', color: p === safePage ? '#38bdf8' : 'var(--text-light)', cursor: 'pointer', fontWeight: p === safePage ? 700 : 400 }}>{p}</button>
+                      {[{label:'«',fn:()=>setQBankPage(1)},{label:'‹',fn:()=>setQBankPage(p=>Math.max(1,p-1))}].map(b=><button key={b.label} onClick={b.fn} disabled={safePage===1} style={{padding:'5px 10px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'6px',color:safePage===1?'var(--text-muted)':'var(--text-light)',cursor:safePage===1?'not-allowed':'pointer'}}>{b.label}</button>)}
+                      {Array.from({length:totalPages},(_,i)=>i+1).filter(p=>p===1||p===totalPages||Math.abs(p-safePage)<=2).reduce((acc,p,idx,arr)=>{if(idx>0&&p-arr[idx-1]>1)acc.push('...');acc.push(p);return acc;},[]).map((p,idx)=>
+                        p==='...'?<span key={`e${idx}`} style={{padding:'5px 8px',color:'var(--text-muted)'}}>…</span>:
+                        <button key={p} onClick={()=>setQBankPage(p)} style={{padding:'5px 10px',background:p===safePage?'rgba(14,165,233,0.3)':'rgba(255,255,255,0.05)',border:`1px solid ${p===safePage?'#0ea5e9':'rgba(255,255,255,0.1)'}`,borderRadius:'6px',color:p===safePage?'#38bdf8':'var(--text-light)',cursor:'pointer',fontWeight:p===safePage?700:400}}>{p}</button>
                       )}
-                      <button onClick={() => setQBankPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} style={{ padding: '5px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: safePage === totalPages ? 'var(--text-muted)' : 'var(--text-light)', cursor: safePage === totalPages ? 'not-allowed' : 'pointer' }}>›</button>
-                      <button onClick={() => setQBankPage(totalPages)} disabled={safePage === totalPages} style={{ padding: '5px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: safePage === totalPages ? 'var(--text-muted)' : 'var(--text-light)', cursor: safePage === totalPages ? 'not-allowed' : 'pointer' }}>»</button>
+                      {[{label:'›',fn:()=>setQBankPage(p=>Math.min(totalPages,p+1))},{label:'»',fn:()=>setQBankPage(totalPages)}].map(b=><button key={b.label} onClick={b.fn} disabled={safePage===totalPages} style={{padding:'5px 10px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'6px',color:safePage===totalPages?'var(--text-muted)':'var(--text-light)',cursor:safePage===totalPages?'not-allowed':'pointer'}}>{b.label}</button>)}
                     </div>
                   </div>
                 </div>
