@@ -9,12 +9,17 @@ import './Dashboard.css';
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { exams, history, user, logout } = useContext(AppContext);
+  const { exams, history, user, logout, classes } = useContext(AppContext);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const studentName = user?.name || "Siswa Tanpa Nama";
   const studentClass = user?.class || "12 IPA 1";
-  const activeExams = exams.filter(e => e.status === 'Aktif');
+  const activeExams = exams.filter(e => {
+    if (e.status !== 'Aktif') return false;
+    if (!e.class_id) return true; // no class restriction — visible to all
+    const examClass = classes.find(c => c.id === e.class_id);
+    return examClass && examClass.class_name === studentClass;
+  });
 
   const averageScore = history.length > 0 
     ? (history.reduce((sum, h) => sum + h.score, 0) / history.length).toFixed(1) 

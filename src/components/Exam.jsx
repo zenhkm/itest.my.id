@@ -10,7 +10,7 @@ import './Exam.css';
 const Exam = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { exams, saveResult, isFetching, showConfirm, fetchExamSession, upsertExamSession, deleteExamSession, user } = useContext(AppContext);
+  const { exams, saveResult, isFetching, showConfirm, fetchExamSession, upsertExamSession, deleteExamSession, user, classes } = useContext(AppContext);
 
   const examData = exams.find(e => e.id === id);
 
@@ -263,6 +263,22 @@ const Exam = () => {
         </div>
       </div>
     );
+  }
+
+  // Class-based access guard
+  if (examData.class_id) {
+    const examClass = classes.find(c => c.id === examData.class_id);
+    if (examClass && examClass.class_name !== user?.class) {
+      return (
+        <div className="exam-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <h2 style={{ color: '#f87171', marginBottom: '12px' }}>Akses Ditolak</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Ujian ini hanya untuk kelas <strong>{examClass.class_name}</strong>. Kelas Anda ({user?.class || '-'}) tidak memiliki akses.</p>
+            <button className="btn-primary" onClick={() => navigate('/dashboard')}>Kembali ke Dashboard</button>
+          </div>
+        </div>
+      );
+    }
   }
 
   if (shuffledQuestions.length === 0) {
