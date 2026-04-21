@@ -121,6 +121,7 @@ const AdminDashboard = () => {
 
   const [showStudentForm, setShowStudentForm] = useState(false);
   const [newStudent, setNewStudent] = useState({ nis: '', name: '', class: '', password: '' });
+  const [manualClassMode, setManualClassMode] = useState(false);
 
   const [showStaffForm, setShowStaffForm] = useState(false);
   const [newStaff, setNewStaff] = useState({ username: '', name: '', role: 'guru', password: '' });
@@ -358,6 +359,12 @@ const AdminDashboard = () => {
       return;
     }
 
+    // Auto-sync new class to classes table if it doesn't exist yet
+    const classExists = classes.some(c => c.class_name === newStudent.class);
+    if (!classExists) {
+      await addClass({ class_name: newStudent.class, grade: '', description: '' });
+    }
+
     let success = false;
     if (editingStudentId) {
       const updates = { ...newStudent };
@@ -371,6 +378,7 @@ const AdminDashboard = () => {
 
     if (success) {
       setNewStudent({ nis: '', name: '', class: '', password: '' });
+      setManualClassMode(false);
       setShowStudentForm(false);
       setEditingStudentId(null);
       if (!editingStudentId && showOnboarding) handleOnboardingStepDone('students');
@@ -2211,7 +2219,35 @@ const AdminDashboard = () => {
                   </div>
                   <div className="form-group-admin">
                     <label>Kelas</label>
-                    <input type="text" placeholder="Contoh: 12 IPA 1" value={newStudent.class} onChange={e => setNewStudent({ ...newStudent, class: e.target.value })} />
+                    {manualClassMode ? (
+                      <input
+                        type="text"
+                        placeholder="Ketik nama kelas baru, contoh: 12 IPA 1"
+                        value={newStudent.class}
+                        onChange={e => setNewStudent({ ...newStudent, class: e.target.value })}
+                        autoFocus
+                      />
+                    ) : (
+                      <select
+                        value={newStudent.class}
+                        onChange={e => setNewStudent({ ...newStudent, class: e.target.value })}
+                        style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', color: newStudent.class ? 'var(--text-light)' : 'var(--text-muted)', fontFamily: 'inherit', width: '100%' }}
+                      >
+                        <option value="" style={{ color: 'black' }}>-- Pilih Kelas --</option>
+                        {classes.map(c => (
+                          <option key={c.id} value={c.class_name} style={{ color: 'black' }}>{c.class_name}{c.grade ? ` (${c.grade})` : ''}</option>
+                        ))}
+                      </select>
+                    )}
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      <input
+                        type="checkbox"
+                        checked={manualClassMode}
+                        onChange={e => { setManualClassMode(e.target.checked); setNewStudent({ ...newStudent, class: '' }); }}
+                        style={{ width: '16px', height: '16px', margin: 0 }}
+                      />
+                      Tambahkan kelas secara manual
+                    </label>
                   </div>
                   <div className="form-group-admin">
                     <label>Kata Sandi Masuk</label>
@@ -2223,6 +2259,7 @@ const AdminDashboard = () => {
                     <button className="btn-secondary-admin" onClick={() => {
                       setEditingStudentId(null);
                       setNewStudent({ nis: '', name: '', class: '', password: '' });
+                      setManualClassMode(false);
                       setShowStudentForm(false);
                     }}>Batal Edit</button>
                   )}
@@ -2257,6 +2294,7 @@ const AdminDashboard = () => {
                             <button className="action-btn" title="Edit" style={{ color: '#3b82f6' }} onClick={() => {
                               setEditingStudentId(std.id);
                               setNewStudent({ nis: std.nis, name: std.name, class: std.class, password: '' });
+                              setManualClassMode(false);
                               setShowStudentForm(true);
                               window.scrollTo({ top: 300, behavior: 'smooth' });
                             }}>
