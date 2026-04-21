@@ -149,11 +149,6 @@ const LiveRecord = () => {
 
   return (
     <div className="live-record">
-      <div className="view-header">
-        <h1><Activity size={20} style={{ verticalAlign: 'middle', marginRight: 8 }} /> Live Record</h1>
-        <p>Memantau sesi ujian yang sedang berlangsung secara real-time.</p>
-      </div>
-
       <div className="live-meta">
         <div className="meta-item">Total Sesi: <strong>{sessions.length}</strong></div>
         <div className="meta-item">Ujian Aktif: <strong>{new Set(sessions.map(s => s.exam_id)).size}</strong></div>
