@@ -253,18 +253,12 @@
   }
   
   .history-table-section {
-    padding: 16px;
+    padding: 20px;
   }
   
   .table-header-title {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
-  }
-
-  .history-table th,
-  .history-table td {
-    padding: 12px 8px;
-    font-size: 0.85rem;
   }
 }
