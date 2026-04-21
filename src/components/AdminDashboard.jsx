@@ -665,10 +665,13 @@ const AdminDashboard = () => {
     const data = getAnalyticsData();
     if (data.length === 0) return toast.error('Tidak ada data untuk diekspor');
 
-    const headers = ['Nama Siswa', 'Ujian', 'Mata Pelajaran', 'Nilai', 'Benar', 'Total Soal', 'Tanggal'];
+    const headers = ['NIM', 'Nama Siswa', 'Ujian', 'Mata Pelajaran', 'Nilai', 'Benar', 'Total Soal', 'Tanggal'];
     const csvContent = [
       headers.join(','),
-      ...data.map(r => `"${r.studentName || 'Anonim'}","${r.examTitle}","${r.subject}","${r.score}","${r.correctAnswers}","${r.totalQuestions}","${new Date(r.date).toLocaleString('id-ID')}"`)
+      ...data.map(r => {
+        const nim = students.find(s => s.name === r.studentName)?.nis || '-';
+        return `"${nim}","${r.studentName || 'Anonim'}","${r.examTitle}","${r.subject}","${r.score}","${r.correctAnswers}","${r.totalQuestions}","${new Date(r.date).toLocaleString('id-ID')}"`;
+      })
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -684,6 +687,7 @@ const AdminDashboard = () => {
     if (data.length === 0) return toast.error('Tidak ada data untuk diekspor');
 
     const formattedData = data.map(r => ({
+      'NIM': students.find(s => s.name === r.studentName)?.nis || '-',
       'Nama Siswa': r.studentName || 'Anonim',
       'Ujian': r.examTitle,
       'Mata Pelajaran': r.subject,
@@ -707,11 +711,13 @@ const AdminDashboard = () => {
     const doc = new jsPDF();
     doc.text('Laporan Hasil Ujian & Rekapitulasi Nilai Siswa', 14, 15);
 
-    const tableColumn = ['Nama Siswa', 'Ujian', 'Smt / Mapel', 'Nilai', 'Benar/Soal', 'Tanggal'];
+    const tableColumn = ['NIM', 'Nama Siswa', 'Ujian', 'Smt / Mapel', 'Nilai', 'Benar/Soal', 'Tanggal'];
     const tableRows = [];
 
     data.forEach(r => {
+      const nim = students.find(s => s.name === r.studentName)?.nis || '-';
       const rowData = [
+        nim,
         r.studentName || 'Anonim',
         r.examTitle,
         r.subject,
@@ -737,6 +743,7 @@ const AdminDashboard = () => {
   // ── Export per-ujian ──────────────────────────────────────
   const exportExamToExcel = (eg) => {
     const formattedData = eg.records.map(r => ({
+      'NIM': students.find(s => s.name === r.studentName)?.nis || '-',
       'Nama Siswa': r.studentName || 'Anonim',
       'Nilai': r.score,
       'Benar': r.correctAnswers,
@@ -747,7 +754,7 @@ const AdminDashboard = () => {
     const ws = XLSX.utils.json_to_sheet(formattedData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Hasil Ujian');
-    ws['!cols'] = [{ wch: 35 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 15 }, { wch: 25 }];
+    ws['!cols'] = [{ wch: 15 }, { wch: 35 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 15 }, { wch: 25 }];
     XLSX.writeFile(wb, `Hasil_${eg.examTitle.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`);
     toast.success('File Excel ujian berhasil diunduh');
   };
@@ -759,8 +766,9 @@ const AdminDashboard = () => {
     doc.setFontSize(10);
     doc.text(`Mata Pelajaran: ${eg.subject}  |  Peserta: ${eg.total}  |  Rata-rata: ${eg.avg}`, 14, 23);
     autoTable(doc, {
-      head: [['Nama Siswa', 'Nilai', 'Benar/Soal', 'Status', 'Tanggal']],
+      head: [['NIM', 'Nama Siswa', 'Nilai', 'Benar/Soal', 'Status', 'Tanggal']],
       body: eg.records.map(r => [
+        students.find(s => s.name === r.studentName)?.nis || '-',
         r.studentName || 'Anonim',
         r.score,
         `${r.correctAnswers}/${r.totalQuestions}`,
@@ -1657,6 +1665,9 @@ const AdminDashboard = () => {
                             <td style={{ paddingLeft: '28px', color: 'var(--text-light)' }}>
                               <span style={{ color: 'var(--text-muted)', marginRight: '6px' }}>↳</span>
                               {h.studentName || 'Anonim'}
+                              <span style={{ marginLeft: '8px', fontSize: '0.78rem', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', padding: '1px 6px', borderRadius: '4px' }}>
+                                {students.find(s => s.name === h.studentName)?.nis || '-'}
+                              </span>
                             </td>
                             <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</td>
                             <td>-</td>
