@@ -192,6 +192,22 @@ export const AppProvider = ({ children }) => {
     return () => { isMounted = false; };
   }, [user?.admin_id]);
 
+  // Helper: extract exam config embedded in questions array
+  const extractExamConfig = (exam) => {
+    const rawQuestions = Array.isArray(exam.questions) ? exam.questions : [];
+    const configItem = rawQuestions.find(q => q._isExamConfig);
+    const questions = rawQuestions.filter(q => !q._isExamConfig);
+    return {
+      ...exam,
+      questions,
+      class_id: configItem?.class_id ?? null,
+      score_mode: configItem?.score_mode ?? 'max_score',
+      max_score: configItem?.max_score ?? 100,
+      point_per_question: configItem?.point_per_question ?? 1,
+      display_count: configItem?.display_count ?? null,
+    };
+  };
+
   const fetchExams = async (currentUser = user) => {
     if (!currentUser || !currentUser.admin_id) return;
     const { data, error } = await supabase
@@ -204,7 +220,7 @@ export const AppProvider = ({ children }) => {
       console.error('Error fetching exams:', error);
       toast.error('Gagal mengambil data ujian dari database.');
     } else {
-      setExams(data || []);
+      setExams((data || []).map(extractExamConfig));
     }
   };
 
@@ -660,13 +676,25 @@ export const AppProvider = ({ children }) => {
 
   // Actions
   const addExam = async (newExam) => {
+    // Embed extra config (class_id, score_mode, etc.) into the questions array
+    // so we don't need extra DB columns
+    const configItem = {
+      _isExamConfig: true,
+      class_id: newExam.class_id || null,
+      score_mode: newExam.score_mode || 'max_score',
+      max_score: newExam.max_score ? parseFloat(newExam.max_score) : 100,
+      point_per_question: newExam.point_per_question ? parseFloat(newExam.point_per_question) : 1,
+      display_count: newExam.display_count ? parseInt(newExam.display_count) : null,
+    };
+    const questionsWithConfig = [configItem, ...(newExam.questions || [])];
+
     const examToInsert = {
       id: `exam_${Date.now()}`,
       title: newExam.title,
       subject: newExam.subject,
       duration: String(newExam.duration),
       status: 'Aktif',
-      questions: newExam.questions,
+      questions: questionsWithConfig,
       shuffle_questions: newExam.shuffle_questions || false,
       shuffle_options: newExam.shuffle_options || false,
       start_time: newExam.start_time || null,
@@ -674,11 +702,6 @@ export const AppProvider = ({ children }) => {
       show_discussion: newExam.show_discussion || false,
       group_id: newExam.group_id || null,
       room_id: newExam.room_id || null,
-      class_id: newExam.class_id || null,
-      score_mode: newExam.score_mode || 'max_score',
-      max_score: newExam.max_score ? parseFloat(newExam.max_score) : 100,
-      point_per_question: newExam.point_per_question ? parseFloat(newExam.point_per_question) : 1,
-      display_count: newExam.display_count ? parseInt(newExam.display_count) : null,
       admin_id: user.admin_id
     };
 
@@ -690,7 +713,8 @@ export const AppProvider = ({ children }) => {
       console.error('Error adding exam:', error);
       toast.error('Gagal menyimpan ujian: ' + (error.message || JSON.stringify(error)), { id: loadingToast });
     } else {
-      setExams([examToInsert, ...exams]);
+      // Store in local state with config extracted as top-level fields
+      setExams([extractExamConfig(examToInsert), ...exams]);
       toast.success('Ujian berhasil disimpan!', { id: loadingToast });
     }
   };
@@ -711,6 +735,23 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateExam = async (id, updates) => {
+    // If questions are being updated, re-embed config
+    if (updates.questions) {
+      const currentExam = exams.find(e => e.id === id);
+      const configItem = {
+        _isExamConfig: true,
+        class_id: updates.class_id ?? currentExam?.class_id ?? null,
+        score_mode: updates.score_mode ?? currentExam?.score_mode ?? 'max_score',
+        max_score: updates.max_score ?? currentExam?.max_score ?? 100,
+        point_per_question: updates.point_per_question ?? currentExam?.point_per_question ?? 1,
+        display_count: updates.display_count ?? currentExam?.display_count ?? null,
+      };
+      const { class_id, score_mode, max_score, point_per_question, display_count, ...dbUpdates } = {
+        ...updates,
+        questions: [configItem, ...updates.questions.filter(q => !q._isExamConfig)]
+      };
+      updates = dbUpdates;
+    }
     const loadingToast = toast.loading('Memperbarui data ujian...');
     const { error } = await supabase
       .from('exams')
