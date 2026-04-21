@@ -216,23 +216,59 @@ const Exam = () => {
   // Keep ref current so realtime callback always calls the latest forceSubmitResult closure
   forceSubmitCallbackRef.current = forceSubmitResult;
 
+  // Ref to always have latest violations count inside the popstate handler (avoids stale closure)
+  const violationsRef = React.useRef(violations);
+  useEffect(() => { violationsRef.current = violations; }, [violations]);
+
   // Block browser back button — treat as a violation
   useEffect(() => {
     if (!isSessionLoaded || isFinished || !shuffledQuestions) return;
-    // Push a dummy state so there's always a forward entry to push back to
-    window.history.pushState({ examLock: true }, '');
 
-    const handlePopState = () => {
-      // Immediately re-push to prevent the page from actually navigating back
-      window.history.pushState({ examLock: true }, '');
-      toast.error(`Tombol kembali tidak diizinkan! Peringatan ${violations + 1}/${VIOLATION_LIMIT}`, { duration: 4000, icon: '⚠️' });
+    // Push 5 buffer states so rapid back-clicks all hit our guard
+    for (let i = 0; i < 5; i++) {
+      window.history.pushState({ examLock: true, buf: i }, '');
+    }
+
+    const handlePopState = (e) => {
+      // Immediately go forward again to stay on the page
+      window.history.go(5);
+      // Re-fill buffer asynchronously after forward resolves
+      setTimeout(() => {
+        for (let i = 0; i < 5; i++) {
+          window.history.pushState({ examLock: true, buf: i }, '');
+        }
+      }, 100);
+
+      const current = violationsRef.current;
+      toast.error(`Tombol kembali tidak diizinkan! Peringatan ${current + 1}/${VIOLATION_LIMIT}`, { duration: 4000, icon: '⚠️' });
       setViolations(prev => prev + 1);
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSessionLoaded, isFinished, shuffledQuestions, violations]);
+  }, [isSessionLoaded, isFinished, shuffledQuestions]);
+
+  // Catch "user navigated away and came back" via sessionStorage flag
+  useEffect(() => {
+    if (!isSessionLoaded || isFinished || !shuffledQuestions) return;
+    const flagKey = `exam_left_${id}`;
+    const wasLeft = sessionStorage.getItem(flagKey);
+    if (wasLeft) {
+      sessionStorage.removeItem(flagKey);
+      toast.error(`Anda terdeteksi meninggalkan halaman ujian! Peringatan ${violations + 1}/${VIOLATION_LIMIT}`, { duration: 4000, icon: '⚠️' });
+      setViolations(prev => prev + 1);
+    }
+
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem(flagKey, '1');
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSessionLoaded, isFinished, shuffledQuestions]);
 
   // Broadcast listener – admin can force-end this student's session remotely
   useEffect(() => {
