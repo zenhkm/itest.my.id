@@ -229,6 +229,11 @@ const AdminDashboard = () => {
   };
 
   const [qBankSubjectFilter, setQBankSubjectFilter] = useState('all');
+  const [qBankSearch, setQBankSearch] = useState('');
+  const [qBankSortCol, setQBankSortCol] = useState('');
+  const [qBankSortDir, setQBankSortDir] = useState('asc');
+  const [qBankPage, setQBankPage] = useState(1);
+  const [qBankPerPage, setQBankPerPage] = useState(10);
   const [showBankModal, setShowBankModal] = useState(false);
   const [selectedBankQuestions, setSelectedBankQuestions] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -1952,62 +1957,139 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            <div className="admin-recent-section glass-panel">
-              <div className="table-responsive">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Mapel</th>
-                      <th style={{ width: '40%' }}>Pertanyaan</th>
-                      <th>Opsi Jawaban</th>
-                      <th>Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredQuestions.filter(q => qBankSubjectFilter === 'all' || q.subject === qBankSubjectFilter).map(q => (
-                      <tr key={q.id}>
-                        <td><span className="badge badge-active">{q.subject}</span></td>
-                        <td><div style={{ maxHeight: '80px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{q.text}</div></td>
-                        <td>
-                          <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                            {q.options.map((opt, i) => (
-                              <li key={i} style={{ color: i === q.correctOption ? '#10b981' : 'inherit', fontWeight: i === q.correctOption ? 'bold' : 'normal' }}>
-                                {String.fromCharCode(65 + i)}. {opt}
-                              </li>
-                            ))}
-                          </ul>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button className="action-btn" title="Edit Soal" style={{ color: '#3b82f6' }} onClick={() => {
-                              setEditingQuestionId(q.id);
-                              setNewBankQuestion({
-                                subject: q.subject,
-                                text: q.text,
-                                imageUrl: q.imageUrl || '',
-                                optionImages: [...(q.optionImages || []), '', '', '', '', ''].slice(0, 5),
-                                options: [...(q.options || []), '', '', '', '', ''].slice(0, 5),
-                                correctOption: typeof q.correctOption !== 'undefined' ? q.correctOption : 0
-                              });
-                              setShowBankForm(true);
-                              window.scrollTo({ top: 300, behavior: 'smooth' });
-                            }}>
-                              <Edit size={16} />
-                            </button>
-                            <button className="action-btn" title="Hapus Permanen" onClick={() => deleteQuestion(q.id)}><Trash2 size={16} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredQuestions.length === 0 && (
-                      <tr>
-                        <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Bank soal masih kosong. Silakan impor dari format Excel (.xlsx).</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            {(() => {
+              // --- DataTables logic ---
+              const handleQBankSort = (col) => {
+                if (qBankSortCol === col) setQBankSortDir(d => d === 'asc' ? 'desc' : 'asc');
+                else { setQBankSortCol(col); setQBankSortDir('asc'); }
+                setQBankPage(1);
+              };
+              const SortIcon = ({ col }) => {
+                if (qBankSortCol !== col) return <span style={{ opacity: 0.3, fontSize: '0.7rem' }}> ⇅</span>;
+                return <span style={{ color: '#38bdf8', fontSize: '0.7rem' }}>{qBankSortDir === 'asc' ? ' ↑' : ' ↓'}</span>;
+              };
+
+              let qList = filteredQuestions.filter(q =>
+                (qBankSubjectFilter === 'all' || q.subject === qBankSubjectFilter) &&
+                (qBankSearch === '' || q.text.toLowerCase().includes(qBankSearch.toLowerCase()) || q.subject.toLowerCase().includes(qBankSearch.toLowerCase()))
+              );
+              if (qBankSortCol) {
+                qList = [...qList].sort((a, b) => {
+                  const va = (a[qBankSortCol] || '').toString().toLowerCase();
+                  const vb = (b[qBankSortCol] || '').toString().toLowerCase();
+                  return qBankSortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+                });
+              }
+              const totalRows = qList.length;
+              const totalPages = Math.max(1, Math.ceil(totalRows / qBankPerPage));
+              const safePage = Math.min(qBankPage, totalPages);
+              const pageStart = (safePage - 1) * qBankPerPage;
+              const pageEnd = pageStart + qBankPerPage;
+              const pagedList = qList.slice(pageStart, pageEnd);
+
+              return (
+                <div className="admin-recent-section glass-panel">
+                  {/* DataTables toolbar */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                      <span>Tampilkan</span>
+                      <select value={qBankPerPage} onChange={e => { setQBankPerPage(Number(e.target.value)); setQBankPage(1); }} style={{ padding: '4px 8px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', color: 'var(--text-light)', fontSize: '0.9rem' }}>
+                        {[10, 25, 50, 100].map(n => <option key={n} value={n} style={{ color: 'black' }}>{n}</option>)}
+                      </select>
+                      <span>data</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Cari:</span>
+                      <input
+                        type="text"
+                        value={qBankSearch}
+                        onChange={e => { setQBankSearch(e.target.value); setQBankPage(1); }}
+                        placeholder="Ketik untuk cari..."
+                        style={{ padding: '6px 12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: 'var(--text-light)', fontSize: '0.9rem', width: '200px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="table-responsive">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleQBankSort('subject')}>Mapel <SortIcon col="subject" /></th>
+                          <th style={{ width: '40%', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleQBankSort('text')}>Pertanyaan <SortIcon col="text" /></th>
+                          <th>Opsi Jawaban</th>
+                          <th>Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pagedList.map(q => (
+                          <tr key={q.id}>
+                            <td><span className="badge badge-active">{q.subject}</span></td>
+                            <td><div style={{ maxHeight: '80px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{q.text}</div></td>
+                            <td>
+                              <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                {q.options.map((opt, i) => (
+                                  <li key={i} style={{ color: i === q.correctOption ? '#10b981' : 'inherit', fontWeight: i === q.correctOption ? 'bold' : 'normal' }}>
+                                    {String.fromCharCode(65 + i)}. {opt}
+                                  </li>
+                                ))}
+                              </ul>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button className="action-btn" title="Edit Soal" style={{ color: '#3b82f6' }} onClick={() => {
+                                  setEditingQuestionId(q.id);
+                                  setNewBankQuestion({
+                                    subject: q.subject,
+                                    text: q.text,
+                                    imageUrl: q.imageUrl || '',
+                                    optionImages: [...(q.optionImages || []), '', '', '', '', ''].slice(0, 5),
+                                    options: [...(q.options || []), '', '', '', '', ''].slice(0, 5),
+                                    correctOption: typeof q.correctOption !== 'undefined' ? q.correctOption : 0
+                                  });
+                                  setShowBankForm(true);
+                                  window.scrollTo({ top: 300, behavior: 'smooth' });
+                                }}>
+                                  <Edit size={16} />
+                                </button>
+                                <button className="action-btn" title="Hapus Permanen" onClick={() => deleteQuestion(q.id)}><Trash2 size={16} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {pagedList.length === 0 && (
+                          <tr>
+                            <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                              {totalRows === 0 && qBankSearch === '' ? 'Bank soal masih kosong. Silakan impor dari format Excel (.xlsx).' : 'Tidak ada data yang cocok dengan pencarian.'}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination footer */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginTop: '16px' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                      {totalRows === 0 ? 'Tidak ada data' : `Menampilkan ${pageStart + 1}–${Math.min(pageEnd, totalRows)} dari ${totalRows} data`}
+                    </span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button onClick={() => setQBankPage(1)} disabled={safePage === 1} style={{ padding: '5px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: safePage === 1 ? 'var(--text-muted)' : 'var(--text-light)', cursor: safePage === 1 ? 'not-allowed' : 'pointer' }}>«</button>
+                      <button onClick={() => setQBankPage(p => Math.max(1, p - 1))} disabled={safePage === 1} style={{ padding: '5px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: safePage === 1 ? 'var(--text-muted)' : 'var(--text-light)', cursor: safePage === 1 ? 'not-allowed' : 'pointer' }}>‹</button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 2).reduce((acc, p, idx, arr) => {
+                        if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                        acc.push(p);
+                        return acc;
+                      }, []).map((p, idx) =>
+                        p === '...' ? <span key={`e${idx}`} style={{ padding: '5px 8px', color: 'var(--text-muted)' }}>…</span> :
+                        <button key={p} onClick={() => setQBankPage(p)} style={{ padding: '5px 10px', background: p === safePage ? 'rgba(14,165,233,0.3)' : 'rgba(255,255,255,0.05)', border: `1px solid ${p === safePage ? '#0ea5e9' : 'rgba(255,255,255,0.1)'}`, borderRadius: '6px', color: p === safePage ? '#38bdf8' : 'var(--text-light)', cursor: 'pointer', fontWeight: p === safePage ? 700 : 400 }}>{p}</button>
+                      )}
+                      <button onClick={() => setQBankPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} style={{ padding: '5px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: safePage === totalPages ? 'var(--text-muted)' : 'var(--text-light)', cursor: safePage === totalPages ? 'not-allowed' : 'pointer' }}>›</button>
+                      <button onClick={() => setQBankPage(totalPages)} disabled={safePage === totalPages} style={{ padding: '5px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: safePage === totalPages ? 'var(--text-muted)' : 'var(--text-light)', cursor: safePage === totalPages ? 'not-allowed' : 'pointer' }}>»</button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
