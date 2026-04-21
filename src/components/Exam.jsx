@@ -142,12 +142,15 @@ const Exam = () => {
     const totalQs = currentQuestions.length;
 
     currentQuestions.forEach(q => {
-      const isCorrect = currentAnswers[q.id] === q.correctOption || currentAnswers[q.id] === q.correctAnswer;
+      const studentAnswer = currentAnswers[q.id];
+      // Must be explicitly answered; undefined === undefined would be a false positive
+      const isCorrect = studentAnswer !== undefined &&
+        (studentAnswer === q.correctOption || studentAnswer === q.correctAnswer);
       if (isCorrect) correctAnswers++;
 
       details.push({
         questionText: q.text,
-        studentAnswer: currentAnswers[q.id] !== undefined ? q.options[currentAnswers[q.id]] : 'Tidak Dijawab',
+        studentAnswer: studentAnswer !== undefined ? q.options[studentAnswer] : 'Tidak Dijawab',
         correctAnswer: q.options[q.correctOption],
         isCorrect: isCorrect
       });
