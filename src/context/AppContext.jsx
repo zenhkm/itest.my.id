@@ -667,6 +667,7 @@ export const AppProvider = ({ children }) => {
       show_discussion: newExam.show_discussion || false,
       group_id: newExam.group_id || null,
       room_id: newExam.room_id || null,
+      class_id: newExam.class_id || null,
       admin_id: user.admin_id
     };
 

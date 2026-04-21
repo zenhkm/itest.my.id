@@ -485,7 +485,8 @@ const AdminDashboard = () => {
     end_time: '',
     show_discussion: false,
     group_id: '',
-    room_id: ''
+    room_id: '',
+    class_id: ''
   });
 
   const handleLogout = () => {
@@ -654,7 +655,7 @@ const AdminDashboard = () => {
     }
 
     await addExam(newExam);
-    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, group_id: '', room_id: '' });
+    setNewExam({ title: '', subject: '', duration: '', questions: [], shuffle_questions: false, shuffle_options: false, start_time: '', end_time: '', show_discussion: false, group_id: '', room_id: '', class_id: '' });
     setActiveTab('exams');
   };
 
@@ -1391,6 +1392,19 @@ const AdminDashboard = () => {
                     <option value="">-- Semua / Tidak Dibatasi --</option>
                     {groups.map(g => (
                       <option key={g.id} value={g.id} style={{ color: 'black' }}>{g.name}{g.members?.length ? ` (${g.members.length} siswa)` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group-admin">
+                  <label>Kelas (Opsional)</label>
+                  <select
+                    value={newExam.class_id}
+                    onChange={(e) => setNewExam({ ...newExam, class_id: e.target.value })}
+                    style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', color: 'var(--text-light)', fontFamily: 'inherit' }}
+                  >
+                    <option value="">-- Semua Kelas --</option>
+                    {classes.map(c => (
+                      <option key={c.id} value={c.id} style={{ color: 'black' }}>{c.class_name}{c.grade ? ` - ${c.grade}` : ''}</option>
                     ))}
                   </select>
                 </div>
