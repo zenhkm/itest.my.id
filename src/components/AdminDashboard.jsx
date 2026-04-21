@@ -1,4 +1,4 @@
-﻿import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -1838,7 +1838,7 @@ const AdminDashboard = () => {
                     <button className="back-btn" onClick={() => { setQBankSelectedSubject(null); setQBankSearch(''); setQBankPage(1); setShowBankForm(false); setEditingQuestionId(null); }} style={{ marginBottom: '6px' }}>
                       <ArrowLeft size={16} /> Kembali ke Daftar Mata Pelajaran
                     </button>
-                    <h1>ًں“ڑ {qBankSelectedSubject}</h1>
+                    <h1>{qBankSelectedSubject}</h1>
                     <p>{questions.filter(q => q.subject === qBankSelectedSubject).length} soal tersedia</p>
                   </>
                 ) : (
