@@ -216,6 +216,24 @@ const Exam = () => {
   // Keep ref current so realtime callback always calls the latest forceSubmitResult closure
   forceSubmitCallbackRef.current = forceSubmitResult;
 
+  // Block browser back button — treat as a violation
+  useEffect(() => {
+    if (!isSessionLoaded || isFinished || !shuffledQuestions) return;
+    // Push a dummy state so there's always a forward entry to push back to
+    window.history.pushState({ examLock: true }, '');
+
+    const handlePopState = () => {
+      // Immediately re-push to prevent the page from actually navigating back
+      window.history.pushState({ examLock: true }, '');
+      toast.error(`Tombol kembali tidak diizinkan! Peringatan ${violations + 1}/${VIOLATION_LIMIT}`, { duration: 4000, icon: '⚠️' });
+      setViolations(prev => prev + 1);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSessionLoaded, isFinished, shuffledQuestions, violations]);
+
   // Broadcast listener – admin can force-end this student's session remotely
   useEffect(() => {
     if (!isSessionLoaded || isFinished || !examData || !user) return;
